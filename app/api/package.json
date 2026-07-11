@@ -12,7 +12,8 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "lint:check": "eslint src/**/*.ts --max-warnings 0",
     "format": "prettier --write .",
-    "openapi-ts": "openapi-ts"
+    "openapi-ts": "openapi-ts",
+    "seed:event": "node scripts/seed-event.mjs"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

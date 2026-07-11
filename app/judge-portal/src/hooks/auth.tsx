@@ -1,6 +1,7 @@
 'use client';
 
 import { useSupabaseAuth } from '@/providers/SupabaseAuthProvider';
+import { OTP_LENGTH } from '@/lib/constants';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
@@ -54,7 +55,7 @@ export function useVerifyOtp(email: string, onVerifySuccess: () => void) {
 
   return useMutation({
     mutationFn: async (otp: string) => {
-      if (!otp || otp.length < 6) throw new Error('Enter the 6-digit code');
+      if (!otp || otp.length < OTP_LENGTH) throw new Error(`Enter the ${OTP_LENGTH}-digit code`);
 
       const { data, error } = await auth.verifyOtp({ email, token: otp, type: 'email' });
       if (error) throw new Error(error.message);

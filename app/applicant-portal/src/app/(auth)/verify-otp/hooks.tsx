@@ -1,6 +1,7 @@
 'use client';
 
 import { useSendOtpMutation, useVerifyOtp } from '@/hooks/auth';
+import { OTP_LENGTH } from '@/lib/constants';
 import { getErrorMessage } from '@/utils/getErrorMessage';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,7 +13,7 @@ export function useOtpVerification(email: string) {
 
   const messages = {
     title: 'Verify your email',
-    description: `Enter the 6-digit code sent to ${email}`,
+    description: `Enter the ${OTP_LENGTH}-digit code sent to ${email}`,
     buttonText: 'Verify',
     resendText: 'Resend code',
     renavigateText: 'Back'
@@ -70,12 +71,12 @@ export function useOtpVerification(email: string) {
     const trimmedOtp = otp.trim();
 
     if (!trimmedOtp) {
-      alert('Please enter the 6-digit code');
+      alert(`Please enter the ${OTP_LENGTH}-digit code`);
       return;
     }
 
-    if (trimmedOtp.length !== 6 || /\D/.test(trimmedOtp)) {
-      alert('Code must be exactly 6 digits');
+    if (trimmedOtp.length !== OTP_LENGTH || /\D/.test(trimmedOtp)) {
+      alert(`Code must be exactly ${OTP_LENGTH} digits`);
       return;
     }
 

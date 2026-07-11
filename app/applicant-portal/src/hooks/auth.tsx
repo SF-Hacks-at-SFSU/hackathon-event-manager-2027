@@ -1,4 +1,5 @@
 import { OtpErrorType } from '@/app/application/types';
+import { OTP_LENGTH } from '@/lib/constants';
 import { useSupabaseAuth } from '@/providers/SupabaseAuthProvider';
 import { User } from '@supabase/supabase-js';
 import {
@@ -87,7 +88,8 @@ export function useVerifyOtp(
 
   return useMutation<User, OtpErrorType, string>({
     mutationFn: async (otp: string) => {
-      if (!otp || otp.length < 6) throw { type: 'INVALID_OTP', message: 'Enter the 6-digit code' };
+      if (!otp || otp.length < OTP_LENGTH)
+        throw { type: 'INVALID_OTP', message: `Enter the ${OTP_LENGTH}-digit code` };
 
       const { data, error } = await auth.verifyOtp({
         email,
@@ -142,7 +144,16 @@ export function useSendOtpMutation(
       const trimmedEmail = email.trim();
       if (!trimmedEmail) throw new Error('Enter your email');
 
-      const { error } = await auth.signInWithOtp({ email: trimmedEmail });
+      const { error } = await auth.signInWithOtp({
+        email: trimmedEmail,
+        options: {
+          // Supabase's default email templates only include a clickable link
+          // (customizing them to also show a typed code requires custom SMTP,
+          // which is a paid-tier-adjacent setup step). Route the click back
+          // here so `/auth/callback` can finish the sign-in.
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`
+        }
+      });
       if (error) throw new Error(error.message);
 
       return true;

@@ -1,5 +1,4 @@
 'use client';
-'use client';
 
 import { Button } from '@/components/shadcn/ui/button';
 import {
@@ -10,6 +9,7 @@ import {
   FieldLabel
 } from '@/components/shadcn/ui/field';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/shadcn/ui/input-otp';
+import { OTP_LENGTH } from '@/lib/constants';
 import {
   Card,
   CardContent,
@@ -77,12 +77,12 @@ export function VerifyOtpPage({ email }: Props) {
               <Field>
                 <FieldLabel>One-Time Password</FieldLabel>
                 <InputOTP
-                  maxLength={6}
+                  maxLength={OTP_LENGTH}
                   value={otp}
-                  onChange={(val: string) => setOtp(val.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(val: string) => setOtp(val.replace(/\D/g, '').slice(0, OTP_LENGTH))}
                 >
                   <InputOTPGroup>
-                    {Array.from({ length: 6 }).map((_, idx) => (
+                    {Array.from({ length: OTP_LENGTH }).map((_, idx) => (
                       <InputOTPSlot key={idx} index={idx} />
                     ))}
                   </InputOTPGroup>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useSendOtpMutation, useVerifyOtp } from '@/hooks/auth';
+import { OTP_LENGTH } from '@/lib/constants';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -50,11 +51,11 @@ export default function LoginPage() {
             verifyOtp.mutate(otp);
           }}
         >
-          <p className="text-sm text-gray-600">Enter the 6-digit code sent to {email}</p>
+          <p className="text-sm text-gray-600">Enter the {OTP_LENGTH}-digit code sent to {email}</p>
           <input
             inputMode="numeric"
             required
-            placeholder="123456"
+            placeholder="12345678"
             className="rounded border px-3 py-2"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
