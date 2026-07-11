@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+env:
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+  DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres"
+  SUPABASE_URL: "https://xyzcompany.supabase.co"
+  SUPABASE_SERVICE_ROLE_KEY: "test"
+  NEXT_PUBLIC_SUPABASE_URL: "https://xyzcompany.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "test"
+  NEXT_PUBLIC_API_URL: "https://xyzcompany.supabase.co"
+  NEXT_PUBLIC_EVENT_ID: "test"
+  NEXT_PUBLIC_BASE_URL: "https://xyzcompany.com"
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app/api
+    # Prisma schema targets Supabase-managed Postgres and references the
+    # `auth.uid()` helper Supabase injects. Plain Postgres doesn't have it,
+    # so we stub it below just so `prisma db push` can create the tables —
+    # tests always pass explicit ids and never rely on that default firing.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm install
+      - name: Stub Supabase's auth.uid() so DDL matches production schema
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -c \
+            "CREATE SCHEMA IF NOT EXISTS auth; CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid AS \$\$ SELECT NULL::uuid \$\$ LANGUAGE sql STABLE;"
+      - run: npx prisma db push --skip-generate
+      - run: npm run lint:check
+      - run: npm run build
+      - run: npm test
+
+  applicant-portal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app/applicant-portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm install
+      - run: npm run lint
+      - run: npm run build
+
+  admin-portal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app/admin-portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm install
+      - run: npm run lint
+      - run: npm run build
+
+  judge-portal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app/judge-portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm install
+      - run: npm run lint
+      - run: npm run build

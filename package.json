@@ -1,0 +1,24 @@
+{
+  "name": "hackathon-event-manager-2027",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "app/api",
+    "app/applicant-portal",
+    "app/admin-portal",
+    "app/judge-portal"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=app/api",
+    "dev:applicant": "npm run dev --workspace=app/applicant-portal",
+    "dev:admin": "npm run dev --workspace=app/admin-portal",
+    "dev:judge": "npm run dev --workspace=app/judge-portal",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}
