@@ -1,10 +1,12 @@
 # Roadmap
 
-Status of this scaffold as of 2026-07-10, and what's left before it can run
-SF Hacks 2027. This is a working baseline (every workspace lints, type-checks,
-and builds — see "Verified" below) but most flows are MVP-depth, not
-production-depth. Treat this as the starting point for the team, not a
-finished app.
+Status as of 2026-07-11, and what's left before this can run SF Hacks 2027.
+The applicant portal is live against a real Supabase project and the admin
+portal works end to end locally against the same backend — this is past
+"scaffold," but most flows are still MVP-depth, not production-depth, and
+the API itself isn't deployed yet. See "Deployed / verified for real" below
+for exactly what's actually been proven to work versus what's still
+untested assumption.
 
 ## What's carried over from the 2026 app (validated, working logic)
 
@@ -58,33 +60,68 @@ finished app.
    changes will log a `failed` `EmailLog` row ("no template registered")
    rather than silently doing nothing — check `dashboard` → email logs UI
    (not yet built; currently only queryable via `emailTemplates.logs`).
-4. **CI's Postgres-service + `auth.uid()` stub was written but not dry-run
-   locally** — this sandbox has neither Docker nor a local Postgres install.
-   Verify it end-to-end on the first PR that touches `app/api`.
-5. **No design system yet.** `admin-portal` and `judge-portal` are plain
+4. **No design system yet.** `admin-portal` and `judge-portal` are plain
    Tailwind, not the shadcn/ui setup `applicant-portal` already has. Decide
    whether to port shadcn over or pick something else before building out
    real UI.
-6. **`postcss` moderate advisory** (GHSA-qx2v-qp2m-jg93) via a transitive dep
+5. **`postcss` moderate advisory** (GHSA-qx2v-qp2m-jg93) via a transitive dep
    inside `next` itself — no non-breaking fix upstream yet. Low real risk for
    this app; re-run `npm audit` when bumping Next.
-7. **No test coverage for the new judging/comms logic beyond
+6. **No test coverage for the new judging/comms logic beyond
    `computeLeaderboard`.** The scoring aggregation is unit tested; assignment,
    template rendering, and the application-status-change email trigger are not.
-8. **Mentor queue, sponsor tooling, and a schedule view** were flagged in the
+7. **Mentor queue, sponsor tooling, and a schedule view** were flagged in the
    2026 analysis as day-of-event gaps and are still gaps here — only
    announcements shipped.
+8. **Bootstrapping the first organizer is a manual script, not a flow.**
+   `app/api/scripts/make-organizer.mjs <profileId> <eventId>` promotes a user
+   directly in the database — fine for one tech lead standing up an event,
+   not a real invite/admin-management UI. Build that before onboarding more
+   organizers.
 
-## Verified in this session
+## Deployed / verified for real (not just locally)
 
-- `app/api`: `prisma generate`, `eslint --max-warnings 0`, full `tsup` build
-  (incl. `.d.ts` generation, which type-checks), and the DB-independent unit
-  test suite (`judging.test.ts`) all pass. The ported `teams.test.ts`
-  integration test correctly fails fast (connection refused, no hang) without
-  a live Postgres — expected, since none is available in this sandbox.
-- `app/applicant-portal`, `app/admin-portal`, `app/judge-portal`: each lints
-  and builds (including Next's type-check pass) both standalone and via the
-  root `npm install && npm run build` workspace flow.
-- Not verified: the CI workflow itself (no Docker/GitHub Actions runner
-  available here), and anything requiring a live Supabase project or Postgres
-  instance (actual sign-in, actual data round-trips).
+As of 2026-07-11, this is running against real infrastructure, not just
+local dev — the applicant sign-in → application → team-creation flow, and
+the admin portal (applications review, judging, announcements) both work
+end to end against:
+- A real Supabase project (Postgres + Auth), schema pushed via `prisma db push`
+  through Supabase's session-mode pooler (the direct connection is IPv6-only
+  and unreachable from networks without IPv6 egress — use the pooler).
+- Resend as custom SMTP (Supabase's built-in mailer rate-limits hard within
+  a few sends; `onboarding@resend.dev` works unverified but **only sends to
+  the Resend account's own email** — verify a real sending domain before
+  applicants use this for real).
+- The repo is pushed to `github.com/SF-Hacks-at-SFSU/hackathon-event-manager-2027`
+  with CI genuinely green, including `teams.test.ts` passing against a real
+  Postgres for the first time ever (it never ran in the 2026 repo's CI at all).
+- `app/applicant-portal` deploys to Vercel. Getting there surfaced several
+  monorepo-specific build issues now fixed (see git history around
+  2026-07-11): Vercel's per-app deploy only installs that one workspace's
+  dependencies, not the whole monorepo, so every frontend's build script now
+  runs `npm install` inside `../api` before `prisma generate` — needed
+  because all three frontends import the API's `AppRouter` *type*, which
+  transitively touches everything the API imports (Prisma client, zod
+  schemas, `ws`, `@aws-sdk/client-ses`, ...), not just the pieces a
+  frontend actually uses.
+- **The API itself is not deployed yet.** It's a traditional `app.listen()`
+  Express server — Vercel's serverless model fights that pattern. Deploy it
+  to Railway (matches what the 2026 app used) or another always-on host,
+  not Vercel, to avoid re-fighting this.
+- One real, non-obvious OTP detail: this Supabase project's configured
+  email-OTP length is **8 digits**, not Supabase's documented default of 6.
+  All three portals now read this from an `OTP_LENGTH` constant per app
+  instead of a hardcoded `6` — check this value against your own project's
+  actual setting if you spin up a different Supabase project.
+
+## Verified via local reproduction (not guessed)
+
+- `app/api`'s full CI job (Postgres service + `auth.uid()`/`pgcrypto` stub +
+  `db push` + lint + build + `npm test`) was reproduced with a real local
+  Postgres (`brew install postgresql@16`) before trusting it in CI — this
+  caught a real gap (the schema's `gen_random_bytes()` default needs the
+  `pgcrypto` extension, not just the `auth.uid()` stub) that would have kept
+  failing silently otherwise.
+- Vercel's scoped, single-workspace install was reproduced locally too
+  (wiping `node_modules`, installing only from within one frontend's
+  directory) before trusting the monorepo build fix above.
