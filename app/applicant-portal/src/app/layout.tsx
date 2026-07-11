@@ -19,12 +19,12 @@ const geistMono = Geist_Mono({
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
 
 export const metadata: Metadata = {
-  title: 'SF Hacks 2026 Application Signup',
+  title: 'SF Hacks 2027 Application Signup',
   description:
-    'Sign up to participate in SF Hacks 2026, the premier student hackathon in San Francisco. Submit your application to join the event and showcase your skills!',
+    'Sign up to participate in SF Hacks 2027, the premier student hackathon in San Francisco. Submit your application to join the event and showcase your skills!',
   icons: `${baseUrl}/logo_pink.png`,
   keywords: [
-    'SF Hacks 2026',
+    'SF Hacks 2027',
     'hackathon',
     'student hackathon',
     'signup',
@@ -34,10 +34,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'SFHacks Team', url: 'https://sfhacks.io' }],
   metadataBase: new URL(baseUrl),
   openGraph: {
-    title: 'SF Hacks 2026 Application Signup',
+    title: 'SF Hacks 2027 Application Signup',
     description:
       'Apply to SF Hacks, San Francisco’s top student hackathon. Submit your application now!',
-    siteName: 'Apply to SF Hacks 2026',
+    siteName: 'Apply to SF Hacks 2027',
     images: [
       {
         url: `${baseUrl}/banner1.png`,

@@ -1,6 +1,5 @@
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import express, { type Application } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
@@ -9,8 +8,6 @@ import { trpcRouter } from './core/_app';
 import apiRouter from './core/apiApps';
 import emailRoutes from './email/email.routes';
 import { createContext } from './core/context';
-
-dotenv.config();
 
 const app: Application = express();
 
