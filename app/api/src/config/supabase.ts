@@ -5,5 +5,9 @@ import ws from 'ws';
 // even though we only use the auth API here. Node 22 (the CI/prod target)
 // wouldn't need this, but this keeps local dev working on either version.
 export const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-  realtime: { transport: ws as unknown as typeof WebSocket }
+  // `as any`, not a structural cast to `typeof WebSocket` — ws's WebSocket
+  // class doesn't structurally match the ambient WebSocket type in every
+  // TS/@types/node version, and that mismatch surfaced only in Vercel's
+  // build environment, not locally.
+  realtime: { transport: ws as any }
 });
