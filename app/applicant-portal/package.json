@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cd ../api && npm install && npx prisma generate && cd ../applicant-portal && next build",
+    "build": "cd ../.. && npm install && npx prisma generate --schema=app/api/prisma/schema.prisma && cd app/applicant-portal && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
