@@ -16,7 +16,10 @@ export default [
         project: './tsconfig.json'
       },
       globals: {
-        ...globals.node
+        ...globals.node,
+        // Referenced only in a type position (`typeof WebSocket`) for the
+        // Node-20 ws polyfill; plain no-undef doesn't parse TS type syntax.
+        WebSocket: 'readonly'
       }
     },
     plugins: {

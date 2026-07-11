@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",
-    "build": "npx prisma generate --schema=../api/prisma/schema.prisma && next build",
+    "build": "npx prisma@^6.18.0 generate --schema=../api/prisma/schema.prisma && next build",
     "start": "next start -p 3002",
     "lint": "eslint"
   },
@@ -29,6 +29,7 @@
     "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.20",
-    "@eslint/eslintrc": "^3"
+    "@eslint/eslintrc": "^3",
+    "prisma": "^6.18.0"
   }
 }
