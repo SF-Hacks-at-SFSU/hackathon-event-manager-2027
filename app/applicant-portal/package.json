@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cd ../.. && npm install && npx prisma generate --schema=app/api/prisma/schema.prisma && cd app/applicant-portal && next build",
+    "build": "npx prisma generate --schema=../api/prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@hackathon-2027/api": "*",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.10",

@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",
-    "build": "cd ../.. && npm install && npx prisma generate --schema=app/api/prisma/schema.prisma && cd app/judge-portal && next build",
+    "build": "npx prisma generate --schema=../api/prisma/schema.prisma && next build",
     "start": "next start -p 3002",
     "lint": "eslint"
   },
   "dependencies": {
+    "@hackathon-2027/api": "*",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "next": "15.5.20",
