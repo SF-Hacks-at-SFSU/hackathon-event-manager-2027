@@ -13,7 +13,7 @@ export default function RootLayout({
     <AuthOnlyProvider>
       <BaseProtectedProvider>
         <FullyProtectedProvider>
-          <main className="mx-auto w-full max-w-lg px-6 py-12 space-y-8 ">{children}</main>
+          <main className="portal-page">{children}</main>
         </FullyProtectedProvider>
       </BaseProtectedProvider>
     </AuthOnlyProvider>

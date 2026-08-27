@@ -3,6 +3,7 @@ import { Toaster } from '@/components/shadcn/ui/sonner';
 import '@/styles/globals.css';
 import { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import Image from 'next/image';
 import Link from 'next/link';
 import Providers from '../providers';
 
@@ -64,25 +65,48 @@ export default function RootLayout({
       >
         <GlobalProgressBar />
         <Providers>
+          <header className="sticky top-0 z-40 border-b border-white/8 bg-background/80 backdrop-blur-xl">
+            <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
+              <Link href="/" className="flex items-center gap-3" aria-label="SF Hacks home">
+                <Image src="/logo_pink.png" alt="SF Hacks" width={36} height={36} />
+                <div className="leading-tight">
+                  <p className="text-sm font-semibold">SF Hacks</p>
+                  <p className="text-xs text-muted-foreground">Application portal</p>
+                </div>
+              </Link>
+              <Link
+                href="https://sfhacks.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-white/10 px-4 py-2 text-sm text-muted-foreground transition hover:border-white/20 hover:bg-white/5 hover:text-foreground"
+              >
+                Event website
+              </Link>
+            </div>
+          </header>
           <main className="flex-1">{children}</main>
-          <footer className="relative py-6 text-center text-sm text-muted-foreground">
-            Made by{' '}
-            <Link
-              href="https://bento.me/acm-sfsu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline-offset-2 hover:underline transition-colors hover:text-foreground"
-            >
-              ACM @ SFSU
-            </Link>
-            <Link
-              href="https://sfsu-acm.notion.site/2a898c2605148063975ad95c0cf933a8?pvs=105"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute right-4 underline-offset-2 hover:underline transition-colors hover:text-foreground"
-            >
-              Report a Bug
-            </Link>
+          <footer className="border-t border-white/8 py-6 text-sm text-muted-foreground">
+            <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-5 sm:flex-row sm:px-8">
+              <span>
+                Built by{' '}
+                <Link
+                  href="https://bento.me/acm-sfsu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground underline-offset-4 hover:underline"
+                >
+                  ACM @ SFSU
+                </Link>
+              </span>
+              <Link
+                href="https://sfsu-acm.notion.site/2a898c2605148063975ad95c0cf933a8?pvs=105"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              >
+                Report a problem
+              </Link>
+            </div>
           </footer>
           <Toaster />
         </Providers>

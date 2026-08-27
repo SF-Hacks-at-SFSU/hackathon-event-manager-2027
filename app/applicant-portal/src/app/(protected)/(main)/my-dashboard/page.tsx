@@ -4,6 +4,7 @@
  */
 
 import { trpc } from '@/utils/trpc';
+import EventHeader from '@/components/ui/event-header';
 import ErrorStateAlert from '../components/ErrorStateAlert';
 import TeamView from './components/TeamView';
 export default function MyDashboardView() {
@@ -40,14 +41,28 @@ export default function MyDashboardView() {
   }
 
   return (
-    <main className="min-h-1/2 flex items-center justify-center p-4">
-      <div className="w-full max-w-md mx-auto flex flex-col items-center gap-16">
-        <div className="flex flex-col gap-2 items-center text-center">
-          <h3 className="scroll-m-20 text-xl font-semibold tracking-tight">My Team</h3>
-          <p>View and manage your application and your team.</p>
-          <TeamView />
+    <main className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
+      <section className="space-y-6">
+        <EventHeader />
+        <div className="portal-surface p-6 sm:p-8">
+          <p className="portal-eyebrow">Application submitted</p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight">You’re all set for now.</h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+            We’ll show your decision here when applications are reviewed. In the meantime, you can
+            invite teammates and keep your team details up to date.
+          </p>
         </div>
-      </div>
+      </section>
+      <section className="portal-surface p-6 sm:p-8">
+        <div className="mb-6">
+          <p className="portal-eyebrow">Team workspace</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your team</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Invite teammates and review everyone’s application status.
+          </p>
+        </div>
+        <TeamView />
+      </section>
     </main>
   );
 }

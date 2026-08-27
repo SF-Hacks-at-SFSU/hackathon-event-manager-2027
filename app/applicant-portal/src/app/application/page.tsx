@@ -31,7 +31,6 @@ import { OTHER_OPTION } from './schemas';
 import { steps } from './stepConfig';
 import { FormField } from './types';
 
-
 export default function ApplyPage() {
   const router = useRouter();
   const { user } = useBaseProtected();
@@ -102,23 +101,48 @@ export default function ApplyPage() {
   }
 
   return (
-    <main className="flex justify-center items-start min-h-screen py-12 ">
-      <div className="w-full max-w-2xl">
-        <div className="space-y-12">
-          <div className="space-y-4">
-            <EventHeader />
-            <Progress value={((currentStep + 1) / steps.length) * 100} className="h-2" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold">{step.label}</h1>
-            {step.description && (
-              <p className="text-sm text-muted-foreground">{step.description}</p>
-            )}
+    <main className="mx-auto w-full max-w-3xl">
+      <div className="portal-surface overflow-hidden">
+        <div className="border-b border-white/8 px-6 py-7 sm:px-10 sm:py-9">
+          <div className="space-y-8">
+            <div className="space-y-5">
+              <EventHeader />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span>
+                    Step {currentStep + 1} of {steps.length}
+                  </span>
+                  <span>{Math.round(((currentStep + 1) / steps.length) * 100)}% complete</span>
+                </div>
+                <Progress value={((currentStep + 1) / steps.length) * 100} className="h-1.5" />
+                <div className="hidden grid-cols-4 gap-2 sm:grid">
+                  {steps.map((item, index) => (
+                    <div
+                      key={item.key}
+                      className={
+                        index === currentStep
+                          ? 'rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary'
+                          : index < currentStep
+                            ? 'px-3 py-2 text-xs font-medium text-foreground'
+                            : 'px-3 py-2 text-xs text-muted-foreground'
+                      }
+                    >
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-8">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="px-6 py-8 sm:px-10 sm:py-10">
+          <div className="mb-8 space-y-2">
+            <p className="portal-eyebrow">{step.key}</p>
+            <h2 className="text-2xl font-semibold tracking-tight">{step.label}</h2>
+            {step.description && <p className="portal-copy max-w-2xl">{step.description}</p>}
+          </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
             {Object.entries(step.fields).map(([key, field]: [string, FormField]) => {
               // Text Input
               if (field.type === 'text') {
@@ -341,7 +365,7 @@ export default function ApplyPage() {
                               type="checkbox"
                               {...f}
                               checked={f.value}
-                              className="mt-1 cursor-pointer"
+                              className="mt-0.5 size-5 cursor-pointer rounded border-input accent-primary"
                             />
                             <span className="text-sm leading-relaxed">{field.label}</span>
                           </label>
@@ -377,7 +401,7 @@ export default function ApplyPage() {
                                     {...f}
                                     checked={f.value ?? false}
                                     onChange={(e) => f.onChange(e.target.checked)}
-                                    className="cursor-pointer"
+                                    className="size-5 cursor-pointer rounded border-input accent-primary"
                                   />
                                   <span className="text-sm">
                                     {opt.label}
@@ -461,25 +485,24 @@ export default function ApplyPage() {
               </div>
             )
           }
-        </div>
-
-        <div className="flex justify-between gap-3 pt-6">
-          {currentStep > 0 ? (
-            <Button variant="outline" onClick={prevStep}>
-              Back
-            </Button>
-          ) : (
-            <div />
-          )}
-          <Button onClick={form.handleSubmit(onSubmit)}>
-            {isStepLoading || isRedirecting ? (
-              <Spinner />
-            ) : currentStep === steps.length - 1 ? (
-              'Submit Application'
+          <div className="mt-10 flex items-center justify-between gap-3 border-t border-white/8 pt-6">
+            {currentStep > 0 ? (
+              <Button variant="outline" onClick={prevStep}>
+                Back
+              </Button>
             ) : (
-              'Continue'
+              <div />
             )}
-          </Button>
+            <Button onClick={form.handleSubmit(onSubmit)} className="min-w-32">
+              {isStepLoading || isRedirecting ? (
+                <Spinner />
+              ) : currentStep === steps.length - 1 ? (
+                'Submit Application'
+              ) : (
+                'Continue'
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </main>

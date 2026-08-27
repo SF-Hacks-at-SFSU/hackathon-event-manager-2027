@@ -73,6 +73,7 @@ export default function CreateProfile() {
     <main className="flex justify-center items-center">
       <Card className="w-full sm:max-w-md">
         <CardHeader>
+          <p className="portal-eyebrow mb-2">One last step</p>
           <CardTitle>Create your profile</CardTitle>
           <CardDescription>Create your profile to join events as a hacker.</CardDescription>
         </CardHeader>

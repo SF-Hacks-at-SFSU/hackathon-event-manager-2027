@@ -55,8 +55,8 @@ export default function TeamView() {
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <div className="flex flex-col w-full justify-between md:flex-row md:items-end gap-2 ">
+    <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex gap-x-2 items-baseline">
           <small className="text-sm leading-none font-medium">Your Team</small>
           <code className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">

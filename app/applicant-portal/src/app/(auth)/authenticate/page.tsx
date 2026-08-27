@@ -20,7 +20,6 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
-import Image from 'next/image';
 import { Controller } from 'react-hook-form';
 import { useSendOtp } from './hooks';
 
@@ -30,16 +29,8 @@ export default function SendOTPPage() {
   return (
     <main className="flex justify-center items-center">
       <Card className="w-full sm:max-w-md">
-        <div className="flex justify-center pt-6">
-          <Image
-            src="/logo_white.png"
-            alt="App Logo"
-            className="h-16 w-auto object-contain"
-            width={500}
-            height={500}
-          />
-        </div>
         <CardHeader>
+          <p className="portal-eyebrow mb-2">Welcome</p>
           <CardTitle>Continue with your email</CardTitle>
           <CardDescription>
             Enter your email address and we’ll send you a one-time verification code.
@@ -61,7 +52,7 @@ export default function SendOTPPage() {
                     <Input
                       {...field}
                       type="email"
-                      placeholder="john@example.com"
+                      placeholder="you@example.com"
                       autoComplete="email"
                       aria-invalid={fieldState.invalid}
                     />

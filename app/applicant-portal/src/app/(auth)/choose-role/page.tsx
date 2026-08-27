@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 import EventHeader from '@/components/ui/event-header';
 import { Icons } from '@/lib/icons';
@@ -23,14 +24,16 @@ export default function ChooseRolePage() {
     router.push(url ?? `/auth`);
   }
 
-  if (!event?.isTeamManagementOpen && eventLoading == false) {
-    router.replace('/authenticate');
-  }
+  useEffect(() => {
+    if (!eventLoading && !event?.isTeamManagementOpen) {
+      router.replace('/authenticate');
+    }
+  }, [event?.isTeamManagementOpen, eventLoading, router]);
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 ">
+    <main className="mx-auto w-full max-w-3xl py-4 sm:py-8">
       <EventHeader />
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <RoleBlock
           title="Participate as a Hacker!"
           body="Hackers at SF Hacks build innovative software projects, apps, or hardware solutions within a limited timeframe (typically 24–48 hours) by collaborating in teams to solve problems or create something new."

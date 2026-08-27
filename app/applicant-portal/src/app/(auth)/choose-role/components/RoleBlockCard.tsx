@@ -21,7 +21,7 @@ export function RoleBlock({
     <Card
       onClick={disabled ? undefined : onPrimary}
       className={cn(
-        'border-2 transition-all duration-300 ease-out',
+        'group h-full border transition-all duration-300 ease-out',
         disabled ? 'cursor-not-allowed border-muted bg-muted/40 opacity-60' : 'cursor-pointer',
         !disabled &&
           (selected
@@ -29,8 +29,8 @@ export function RoleBlock({
             : 'border-muted hover:border-primary/40 hover:bg-muted/30')
       )}
     >
-      <CardContent className="p-6">
-        <div className="flex items-start gap-3">
+      <CardContent className="p-1 sm:p-2">
+        <div className="flex items-start gap-4">
           {/* Optional icon */}
           {Icon && (
             <div
@@ -43,13 +43,13 @@ export function RoleBlock({
                     : 'text-accent group-hover:text-accent'
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-6 w-6" />
             </div>
           )}
 
           <div className="space-y-2">
-            <h2 className="text-base font-semibold">{title}</h2>
-            <p className="text-sm text-muted-foreground">{body}</p>
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <p className="text-sm leading-6 text-muted-foreground">{body}</p>
           </div>
         </div>
       </CardContent>

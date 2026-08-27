@@ -67,24 +67,24 @@
 
 /* DARK MODE DEFAULT */
 :root {
-  --background: oklch(0.1649 0.0352 281.8285);
+  --background: #090914;
   --foreground: oklch(0.9513 0.0074 260.7315);
-  --card: #1e1e3f;
+  --card: #111122;
   --card-foreground: oklch(0.9513 0.0074 260.7315);
-  --popover: oklch(0.2542 0.0611 281.1423);
+  --popover: #18182d;
   --popover-foreground: oklch(0.9513 0.0074 260.7315);
   --primary: #ff00c8;
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.2542 0.0611 281.1423);
+  --secondary: #20203a;
   --secondary-foreground: oklch(0.9513 0.0074 260.7315);
-  --muted: oklch(0.2542 0.0611 281.1423);
-  --muted-foreground: oklch(0.6245 0.05 278.1046);
+  --muted: #1b1b31;
+  --muted-foreground: #9b9bb5;
   --accent: oklch(0.8903 0.1739 171.269);
   --accent-foreground: oklch(0.1649 0.0352 281.8285);
   --destructive: oklch(0.6535 0.2348 34.037);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.3279 0.0832 280.789);
-  --input: oklch(0.3279 0.0832 280.789);
+  --border: #2d2d4c;
+  --input: #35355c;
   --ring: oklch(0.6726 0.2904 341.4084);
   --chart-1: oklch(0.6726 0.2904 341.4084);
   --chart-2: oklch(0.5488 0.2944 299.0954);
@@ -99,7 +99,7 @@
   --sidebar-accent-foreground: oklch(0.1649 0.0352 281.8285);
   --sidebar-border: oklch(0.3279 0.0832 280.789);
   --sidebar-ring: oklch(0.6726 0.2904 341.4084);
-  --radius: 0.5rem;
+  --radius: 0.75rem;
   --font-sans: Outfit, sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono: Fira Code, monospace;
@@ -200,5 +200,35 @@
   body {
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
+    background-image:
+      radial-gradient(circle at 10% -10%, rgb(255 0 200 / 0.09), transparent 30rem),
+      radial-gradient(circle at 90% 10%, rgb(92 76 255 / 0.08), transparent 28rem);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgb(255 0 200 / 0.28);
+  }
+}
+
+@layer components {
+  .portal-page {
+    @apply mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12;
+  }
+
+  .portal-surface {
+    @apply rounded-2xl border border-white/10 bg-card/85 shadow-2xl shadow-black/20 backdrop-blur-xl;
+  }
+
+  .portal-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-primary;
+  }
+
+  .portal-heading {
+    @apply text-3xl font-semibold tracking-tight text-balance sm:text-4xl;
+  }
+
+  .portal-copy {
+    @apply text-sm leading-6 text-muted-foreground sm:text-base;
   }
 }
