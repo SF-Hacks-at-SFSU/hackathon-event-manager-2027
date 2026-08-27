@@ -13,7 +13,8 @@
     "lint:check": "eslint src/**/*.ts --max-warnings 0",
     "format": "prettier --write .",
     "openapi-ts": "openapi-ts",
-    "seed:event": "node scripts/seed-event.mjs"
+    "seed:event": "node scripts/seed-event.mjs",
+    "seed:schools": "node scripts/import-schools.mjs"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
