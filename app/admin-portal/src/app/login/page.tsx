@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
 
   const sendOtp = useSendOtpMutation();
-  const verifyOtp = useVerifyOtp(email, () => router.push('/dashboard'));
+  const verifyOtp = useVerifyOtp(email, () => router.push('/dashboard/applications'));
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
