@@ -1,7 +1,10 @@
 import { Prisma, participation_level } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import prisma from '../../config/prismaClient';
-import { sendTemplatedEmail } from '../../email/email.service';
+import {
+  sendNewApplicationNotification,
+  sendTemplatedEmail
+} from '../../email/email.service';
 import type { Context } from '../../core/context';
 import type {
   ApplicationCreate as CreateApplicationInput,
@@ -58,7 +61,7 @@ export async function createOrUpdateApplication(
   }
 
   //TODO clarify this later on with different roles.
-  await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.application.findUnique({
       where: { eventId_userId: { eventId, userId } }
     });
@@ -113,8 +116,18 @@ export async function createOrUpdateApplication(
       });
     }
 
-    return { application, eventProfile };
+    return { application, eventProfile, isNewApplication: !existing };
   });
+
+  if (result.isNewApplication) {
+    try {
+      await sendNewApplicationNotification(eventId, result.application.id, userId);
+    } catch (error) {
+      console.error('Failed to send organizer application notification:', error);
+    }
+  }
+
+  return { application: result.application, eventProfile: result.eventProfile };
 }
 
 /**
