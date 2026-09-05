@@ -78,9 +78,16 @@ export default function RootLayout({
                 href="https://sfhacks.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/10 px-4 py-2 text-sm text-muted-foreground transition hover:border-white/20 hover:bg-white/5 hover:text-foreground"
+                className="relative block h-9 w-[72px] overflow-hidden rounded-md opacity-90 transition hover:opacity-100"
+                aria-label="Google Developer Groups"
               >
-                Event website
+                <Image
+                  src="/gdg-logo.png"
+                  alt="Google Developer Groups"
+                  width={300}
+                  height={169}
+                  className="absolute left-[-18px] top-[-66px] h-auto w-[300px] max-w-none"
+                />
               </Link>
             </div>
           </header>
@@ -90,12 +97,12 @@ export default function RootLayout({
               <span>
                 Built by{' '}
                 <Link
-                  href="https://bento.me/acm-sfsu"
+                  href="https://sfhacks.io"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground underline-offset-4 hover:underline"
                 >
-                  ACM @ SFSU
+                  SF Hacks
                 </Link>
               </span>
               <Link
