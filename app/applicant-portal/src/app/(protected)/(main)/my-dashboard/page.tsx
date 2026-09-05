@@ -7,6 +7,7 @@ import { trpc } from '@/utils/trpc';
 import EventHeader from '@/components/ui/event-header';
 import ErrorStateAlert from '../components/ErrorStateAlert';
 import TeamView from './components/TeamView';
+import Link from 'next/link';
 export default function MyDashboardView() {
   // ✅ All hooks at the top
   const { error } = trpc.events.getById.useQuery({
@@ -62,6 +63,27 @@ export default function MyDashboardView() {
           </p>
         </div>
         <TeamView />
+      </section>
+      <section className="portal-surface p-6 sm:p-8 lg:col-span-2">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="portal-eyebrow">More from SF Hacks</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              See what we’re building next.
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Discover upcoming hackathons, workshops, and community events.
+            </p>
+          </div>
+          <Link
+            href="https://sfhacks.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+          >
+            Explore upcoming events
+          </Link>
+        </div>
       </section>
     </main>
   );
