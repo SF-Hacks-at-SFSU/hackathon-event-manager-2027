@@ -2,6 +2,7 @@
 
 import { trpc } from "@/utils/trpc";
 import QrScanner from "qr-scanner";
+import { QRCodeCanvas } from "qrcode.react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type ScanResult = {
@@ -23,8 +24,20 @@ export default function CheckInPage() {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualToken, setManualToken] = useState("");
+  const [testApplicationId, setTestApplicationId] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
   const mode = trpc.checkIn.mode.useQuery();
+  const applications = trpc.applications.listByEvent.useQuery(undefined, {
+    enabled: mode.data?.mode === "test",
+  });
+  const testPass = trpc.checkIn.testPass.useMutation({
+    onSuccess: (data) => {
+      setManualToken(data.token);
+      setCameraError(null);
+      setResult(null);
+    },
+    onError: (error) => setCameraError(error.message),
+  });
 
   const scan = trpc.checkIn.scan.useMutation({
     onSuccess: (data) => {
@@ -112,9 +125,74 @@ export default function CheckInPage() {
       </div>
 
       {mode.data?.mode === "test" && (
-        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-          Scans are validated, but nobody will be marked as checked in.
-        </div>
+        <>
+          <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            Scans are validated, but nobody will be marked as checked in.
+          </div>
+          <section className="mb-5 rounded-2xl border p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+              Safe test pass
+            </p>
+            <h2 className="mt-1 text-lg font-semibold">
+              Try an existing applicant
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              This creates a temporary signed pass without accepting or checking
+              in the applicant.
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <select
+                value={testApplicationId}
+                onChange={(event) => setTestApplicationId(event.target.value)}
+                className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2.5 text-sm"
+              >
+                <option value="">Choose an applicant</option>
+                {applications.data?.map((application) => (
+                  <option key={application.id} value={application.id}>
+                    {[
+                      application.profile.firstName,
+                      application.profile.lastName,
+                    ]
+                      .filter(Boolean)
+                      .join(" ") || "Participant"}
+                    {" · "}
+                    {application.publicStatus ?? "pending"}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!testApplicationId || testPass.isPending}
+                onClick={() =>
+                  testPass.mutate({ applicationId: testApplicationId })
+                }
+                className="rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                Generate test pass
+              </button>
+            </div>
+            {testPass.data?.token && (
+              <div className="mt-5 flex flex-col items-center gap-3 rounded-2xl bg-gray-50 p-5 sm:flex-row sm:items-center">
+                <div className="rounded-xl bg-white p-2 shadow-sm">
+                  <QRCodeCanvas
+                    value={testPass.data.token}
+                    size={150}
+                    includeMargin
+                  />
+                </div>
+                <div>
+                  <p className="font-semibold">
+                    {testPass.data.participantName}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Pass generated. Scan this QR from another device, or use
+                    Validate below.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        </>
       )}
 
       <section className="overflow-hidden rounded-3xl border bg-gray-950">

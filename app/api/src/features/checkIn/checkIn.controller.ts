@@ -45,7 +45,7 @@ export async function scanCheckInPass(eventId: string, token: string) {
   if (!application) {
     throw new TRPCError({ code: 'NOT_FOUND', message: 'No application matches this pass' });
   }
-  if (application.publicStatus !== 'accepted') {
+  if (application.publicStatus !== 'accepted' && !isCheckInTestMode) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'This participant is not accepted' });
   }
 
@@ -71,6 +71,29 @@ export async function scanCheckInPass(eventId: string, token: string) {
       checkedIn: checkedInApplication.checkedIn,
       checkedInAt: checkedInApplication.checkedInAt
     }
+  };
+}
+
+export async function createTestCheckInPass(eventId: string, applicationId: string) {
+  if (!isCheckInTestMode) {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Test passes are disabled in live mode' });
+  }
+
+  const application = await prisma.application.findFirst({
+    where: { id: applicationId, eventId },
+    include: { profile: { select: { firstName: true, lastName: true } } }
+  });
+
+  if (!application) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Application not found' });
+  }
+
+  return {
+    token: createCheckInToken(eventId, application.userId),
+    participantName:
+      [application.profile.firstName, application.profile.lastName].filter(Boolean).join(' ') ||
+      'Participant',
+    publicStatus: application.publicStatus ?? 'pending'
   };
 }
 
