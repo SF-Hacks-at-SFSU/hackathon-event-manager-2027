@@ -1,16 +1,21 @@
-'use client';
+"use client";
 
-import { useSignOut } from '@/hooks/auth';
-import { RequireAuth } from '@/components/RequireAuth';
-import Link from 'next/link';
+import { useSignOut } from "@/hooks/auth";
+import { RequireAuth } from "@/components/RequireAuth";
+import Link from "next/link";
 
 const NAV = [
-  { href: '/dashboard/applications', label: 'Applications' },
-  { href: '/dashboard/judging', label: 'Judging' },
-  { href: '/dashboard/announcements', label: 'Announcements' }
+  { href: "/dashboard/applications", label: "Applications" },
+  { href: "/dashboard/check-in", label: "Check-in" },
+  { href: "/dashboard/judging", label: "Judging" },
+  { href: "/dashboard/announcements", label: "Announcements" },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const signOut = useSignOut();
 
   return (

@@ -45,6 +45,7 @@ interface TeamMember {
     applications: {
       createdAt: string | null;
       status: string | null;
+      publicStatus: 'pending' | 'rejected' | 'accepted' | 'waitlisted' | null;
       schoolEmail: string | null;
     }[];
     firstName: string | null;
@@ -71,11 +72,10 @@ export default function TeamMemberCard({
   //const isMemberUser = false;
   const isTeamManagementUnlocked = true; // maybe this should be passed in as a prop or something or we need to find some sort of global context for this because having to calculate this multiple times via an API call will be crazy
 
-  const applicationStatus = teamMemberInfo.profile.applications[0].status?.toUpperCase() as
-    | 'PENDING'
-    | 'REJECTED'
-    | 'ACCEPTED'
-    | 'WAITLISTED';
+  const applicationStatus = (
+    teamMemberInfo.profile.applications[0].publicStatus ??
+    teamMemberInfo.profile.applications[0].status
+  )?.toUpperCase() as 'PENDING' | 'REJECTED' | 'ACCEPTED' | 'WAITLISTED';
   const firstName = teamMemberInfo.profile.firstName ?? 'Unknown';
   const lastName = teamMemberInfo.profile.lastName ?? 'Unknown';
   const firstInitial = teamMemberInfo.profile.firstName?.[0] ?? '?';
@@ -89,6 +89,10 @@ export default function TeamMemberCard({
   const [qrOpen, setQrOpen] = useState(false);
   const isAccepted = applicationStatus === 'ACCEPTED';
   const canShowQr = isMemberLoggedInUser && isAccepted;
+  const checkInPass = trpc.checkIn.myPass.useQuery(undefined, {
+    enabled: qrOpen && canShowQr,
+    retry: false
+  });
 
   const utils = trpc.useUtils();
   const kickFromTeamMutation = trpc.teams.kickTeamMemberById.useMutation({
@@ -229,10 +233,26 @@ export default function TeamMemberCard({
                               </AlertDialogDescription>
                             </AlertDialogHeader>
 
-                            <div className="flex justify-center py-2">
-                              <div className="bg-white p-3 rounded-md">
-                                <QRCodeCanvas value={userId} size={220} includeMargin />
-                              </div>
+                            <div className="flex min-h-64 items-center justify-center py-2">
+                              {checkInPass.isLoading && (
+                                <p className="text-sm text-muted-foreground">
+                                  Preparing secure pass…
+                                </p>
+                              )}
+                              {checkInPass.isError && (
+                                <p className="max-w-xs text-center text-sm text-destructive">
+                                  {checkInPass.error.message}
+                                </p>
+                              )}
+                              {checkInPass.data?.token && (
+                                <div className="rounded-md bg-white p-3">
+                                  <QRCodeCanvas
+                                    value={checkInPass.data.token}
+                                    size={220}
+                                    includeMargin
+                                  />
+                                </div>
+                              )}
                             </div>
 
                             <AlertDialogFooter>

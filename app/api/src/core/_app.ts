@@ -7,6 +7,7 @@ import { userProfileRouter } from '../features/userProfile/userProfile.routes';
 import { judgingRouter } from '../features/judging/judging.routes';
 import { announcementsRouter } from '../features/announcements/announcements.routes';
 import { emailTemplatesRouter } from '../email/email.templates.routes';
+import { checkInRouter } from '../features/checkIn/checkIn.routes';
 import { t } from './trpc';
 
 export const trpcRouter = t.router({
@@ -19,7 +20,8 @@ export const trpcRouter = t.router({
   eventProfile: eventProfileRouter,
   judging: judgingRouter,
   announcements: announcementsRouter,
-  emailTemplates: emailTemplatesRouter
+  emailTemplates: emailTemplatesRouter,
+  checkIn: checkInRouter
 });
 
 export type AppRouter = typeof trpcRouter;

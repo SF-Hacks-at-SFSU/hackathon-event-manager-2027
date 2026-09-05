@@ -12,6 +12,7 @@ import {
   updateApplicationStatus
 } from './application.controller';
 import { applicationCreateSchema, updateApplicationStatusSchema } from './application.schemas';
+import { operationalMode } from '../../config/operationalMode';
 
 export const applicationRouter = t.router({
   createOrUpdate: t.procedure
@@ -26,6 +27,11 @@ export const applicationRouter = t.router({
 
   // organizer-only review queue
   listByEvent: organizerProcedure.query(({ ctx }) => listApplicationsForEvent(ctx.event!.id)),
+
+  statusMode: organizerProcedure.query(() => ({
+    mode: operationalMode.applicationStatus,
+    testRecipientConfigured: Boolean(operationalMode.applicationStatusTestRecipient)
+  })),
 
   // organizer-only review action, triggers the matching status-change email
   updateStatus: organizerProcedure

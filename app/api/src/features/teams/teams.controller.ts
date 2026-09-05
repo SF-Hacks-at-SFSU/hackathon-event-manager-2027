@@ -29,6 +29,7 @@ export async function getTeamById(id: string) {
                   select: {
                     schoolEmail: true,
                     status: true,
+                    publicStatus: true,
                     createdAt: true
                   },
                   orderBy: { createdAt: 'desc' },
@@ -105,10 +106,10 @@ export async function getTeamPreviewByInviteToken(token: string, requestingUserI
     }
 
     const iHateFknPrismaQueries = await prisma.team.findFirst({
-      where: { 
+      where: {
         joinTeamTokens: {
           token: token
-        } 
+        }
       },
       include: {
         members: {
@@ -123,6 +124,7 @@ export async function getTeamPreviewByInviteToken(token: string, requestingUserI
                   select: {
                     schoolEmail: true,
                     status: true,
+                    publicStatus: true,
                     createdAt: true
                   },
                   orderBy: { createdAt: 'desc' },
@@ -205,7 +207,7 @@ export async function joinTeam(teamId: string, profileId: string, eventId: strin
           }
         }
       });
-      if(isBlacklisted) {
+      if (isBlacklisted) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',
           message: `User with id ${profileId} is blacklisted from team ${teamId}`
@@ -382,7 +384,7 @@ export async function kickTeamMember(
           userId: kickedMemberId
         }
       });
-      if(!blacklist) {
+      if (!blacklist) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: `There was an issue adding kicked member ${kickedMemberId} to blacklist`
@@ -414,7 +416,7 @@ export async function kickTeamMember(
   }
 }
 
-export async function getOrCreateJoinTeamToken(teamId : string) {
+export async function getOrCreateJoinTeamToken(teamId: string) {
   try {
     const token = await prisma.$transaction(async (tx) => {
       //middleware verifies that team exists
@@ -423,20 +425,20 @@ export async function getOrCreateJoinTeamToken(teamId : string) {
           teamId: teamId
         }
       });
-      
-      if(!tokenObj) {
+
+      if (!tokenObj) {
         //create token for teamId. Team id is all that is required, other fields taken care of by database
         tokenObj = await tx.joinTeamTokens.create({
           data: {
             teamId: teamId
-          }  
+          }
         });
 
         return tokenObj.token;
       }
 
       const currDateTime = new Date();
-      if(tokenObj.expiresAt <= currDateTime) {
+      if (tokenObj.expiresAt <= currDateTime) {
         await tx.joinTeamTokens.delete({
           where: {
             teamId: teamId
@@ -462,7 +464,7 @@ export async function getOrCreateJoinTeamToken(teamId : string) {
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Failed to get or create join team token',
       cause: error
-    });    
+    });
   }
 }
 
@@ -477,7 +479,7 @@ export async function getTeamFromTeamToken(token: string) {
       }
     });
 
-    if(!tokenAndTeam) {
+    if (!tokenAndTeam) {
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'Join team token could not be found'
@@ -499,18 +501,16 @@ export async function getTeamFromTeamToken(token: string) {
       });
     }
 
-    return tokenAndTeam.teams.id; 
-
-  } catch(error) {
+    return tokenAndTeam.teams.id;
+  } catch (error) {
     if (error instanceof TRPCError) throw error;
 
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Could not fetch team from team token'
-    });    
+    });
   }
 }
-
 
 // HELPER FUNCTIONS
 // helper functions have a prisma client passed in because they can either be ran inside of a transaction

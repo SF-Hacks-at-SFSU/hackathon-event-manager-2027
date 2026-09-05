@@ -2,6 +2,7 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import dotenv from 'dotenv';
 import prisma from '../config/prismaClient';
 import { supabase } from '../config/supabase';
+import { getDefaultStatusEmailTemplate } from './status-email.templates';
 
 dotenv.config();
 
@@ -17,6 +18,18 @@ interface EmailInput {
   to: string;
   subject: string;
   html: string;
+}
+
+interface TemplatedEmailOptions {
+  toEmailOverride?: string | null;
+  subjectPrefix?: string;
+  dryRun?: boolean;
+}
+
+export interface TemplatedEmailResult {
+  delivery: 'sent' | 'failed' | 'simulated';
+  toEmail: string;
+  message?: string;
 }
 
 const escapeHtml = (value: string | null | undefined) =>
@@ -63,7 +76,8 @@ export async function sendNewApplicationNotification(
     throw new Error(`Application ${applicationId} was not found after submission`);
   }
 
-  const applicantName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Unknown applicant';
+  const applicantName =
+    [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || 'Unknown applicant';
   const eventName = event?.name || 'SF Hacks event';
   const loginEmail = authResult.data.user?.email || 'Not available';
   const safeSubjectName = applicantName.replace(/[\r\n]+/g, ' ').trim();
@@ -123,14 +137,16 @@ export async function sendTemplatedEmail(
   eventId: string,
   templateKey: string,
   userId: string,
-  variables: Record<string, string> = {}
-) {
-  const template = await prisma.emailTemplate.findUnique({
+  variables: Record<string, string> = {},
+  options: TemplatedEmailOptions = {}
+): Promise<TemplatedEmailResult> {
+  const savedTemplate = await prisma.emailTemplate.findUnique({
     where: { eventId_key: { eventId, key: templateKey } }
   });
+  const template = savedTemplate ?? getDefaultStatusEmailTemplate(templateKey);
 
   if (!template) {
-    return prisma.emailLog.create({
+    await prisma.emailLog.create({
       data: {
         eventId,
         templateKey,
@@ -139,31 +155,63 @@ export async function sendTemplatedEmail(
         errorMessage: `No email template registered for key "${templateKey}"`
       }
     });
+    return {
+      delivery: 'failed',
+      toEmail: 'unknown',
+      message: `No email template registered for key "${templateKey}"`
+    };
   }
 
-  const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
-  const toEmail = authUser?.user?.email;
+  const safeHtmlVariables = Object.fromEntries(
+    Object.entries(variables).map(([key, value]) => [key, escapeHtml(value)])
+  );
+  const renderedSubject = renderTemplate(template.subject, variables)
+    .replace(/[\r\n]+/g, ' ')
+    .trim();
+  const renderedHtml = renderTemplate(template.bodyHtml, safeHtmlVariables);
 
-  if (authError || !toEmail) {
-    return prisma.emailLog.create({
+  let toEmail = options.toEmailOverride ?? null;
+  let authErrorMessage: string | null = null;
+
+  if (!toEmail && !options.dryRun) {
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+    toEmail = authUser?.user?.email ?? null;
+    authErrorMessage = authError?.message ?? null;
+  }
+
+  if (options.dryRun) {
+    return {
+      delivery: 'simulated',
+      toEmail: options.toEmailOverride ?? 'no email sent',
+      message: 'Template rendered successfully. Test mode prevented delivery.'
+    };
+  }
+
+  if (!toEmail) {
+    await prisma.emailLog.create({
       data: {
         eventId,
         templateKey,
         toEmail: 'unknown',
         status: 'failed',
-        errorMessage: authError?.message ?? 'User has no email on file'
+        errorMessage: authErrorMessage ?? 'User has no email on file'
       }
     });
+    return {
+      delivery: 'failed',
+      toEmail: 'unknown',
+      message: authErrorMessage ?? 'User has no email on file'
+    };
   }
 
   try {
     const result = await sendPersonalizedEmail({
       to: toEmail,
-      subject: renderTemplate(template.subject, variables),
-      html: renderTemplate(template.bodyHtml, variables)
+      subject: `${options.subjectPrefix ?? ''}${renderedSubject}`,
+      html: renderedHtml
     });
 
-    return prisma.emailLog.create({
+    await prisma.emailLog.create({
       data: {
         eventId,
         templateKey,
@@ -172,15 +220,18 @@ export async function sendTemplatedEmail(
         providerMessageId: result.MessageId
       }
     });
+    return { delivery: 'sent', toEmail };
   } catch (err) {
-    return prisma.emailLog.create({
+    const message = err instanceof Error ? err.message : String(err);
+    await prisma.emailLog.create({
       data: {
         eventId,
         templateKey,
         toEmail,
         status: 'failed',
-        errorMessage: err instanceof Error ? err.message : String(err)
+        errorMessage: message
       }
     });
+    return { delivery: 'failed', toEmail, message };
   }
 }

@@ -1,11 +1,9 @@
 import { Prisma, participation_level } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import prisma from '../../config/prismaClient';
-import {
-  sendNewApplicationNotification,
-  sendTemplatedEmail
-} from '../../email/email.service';
+import { sendNewApplicationNotification, sendTemplatedEmail } from '../../email/email.service';
 import type { Context } from '../../core/context';
+import { isApplicationStatusTestMode, operationalMode } from '../../config/operationalMode';
 import type {
   ApplicationCreate as CreateApplicationInput,
   UpdateApplicationStatusInput
@@ -68,12 +66,12 @@ export async function createOrUpdateApplication(
 
     const application = existing
       ? await tx.application.update({
-        where: { id: existing.id },
-        data: buildUpdateData(input)
-      })
+          where: { id: existing.id },
+          data: buildUpdateData(input)
+        })
       : await tx.application.create({
-        data: await buildCreateData(userId, eventId, input)
-      });
+          data: await buildCreateData(userId, eventId, input)
+        });
 
     const roleStr = 'hacker';
     const roleEnum = toParticipationLevel(roleStr);
@@ -89,13 +87,13 @@ export async function createOrUpdateApplication(
     });
 
     //create team for new user and new user only not for updates
-    if(!existing) {
+    if (!existing) {
       const numTeamsInEvent = await tx.team.count({
         where: {
           eventId: eventId
         }
       });
-      
+
       const newOrExistingTeam = await tx.team.create({
         data: {
           eventId: eventId,
@@ -136,15 +134,53 @@ export async function createOrUpdateApplication(
  * "application_pending" template keys) so status changes don't require a
  * separate manual bulk-email step, which was the gap in the 2026 admin flow.
  */
-export async function updateApplicationStatus(eventId: string, input: UpdateApplicationStatusInput) {
-  const application = await prisma.application.update({
+export async function updateApplicationStatus(
+  eventId: string,
+  input: UpdateApplicationStatusInput
+) {
+  const existingApplication = await prisma.application.findFirst({
     where: { id: input.applicationId, eventId },
-    data: { publicStatus: input.publicStatus, internalStatus: input.publicStatus }
+    include: {
+      profile: { select: { firstName: true } },
+      event: { select: { name: true } }
+    }
   });
 
-  await sendTemplatedEmail(eventId, `application_${input.publicStatus}`, application.userId);
+  if (!existingApplication) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Application not found' });
+  }
 
-  return application;
+  const application = isApplicationStatusTestMode
+    ? existingApplication
+    : await prisma.application.update({
+        where: { id: input.applicationId, eventId },
+        data: { publicStatus: input.publicStatus, internalStatus: input.publicStatus }
+      });
+
+  const testRecipient = operationalMode.applicationStatusTestRecipient;
+  const notification = await sendTemplatedEmail(
+    eventId,
+    `application_${input.publicStatus}`,
+    existingApplication.userId,
+    {
+      firstName: existingApplication.profile.firstName ?? 'Builder',
+      eventName: existingApplication.event.name,
+      status: input.publicStatus
+    },
+    {
+      toEmailOverride: isApplicationStatusTestMode ? testRecipient : null,
+      subjectPrefix: isApplicationStatusTestMode ? '[TEST] ' : '',
+      dryRun: isApplicationStatusTestMode && !testRecipient
+    }
+  );
+
+  return {
+    application,
+    requestedStatus: input.publicStatus,
+    statusChanged: !isApplicationStatusTestMode,
+    mode: operationalMode.applicationStatus,
+    notification
+  };
 }
 
 // organizer-only: the admin portal's application review queue
