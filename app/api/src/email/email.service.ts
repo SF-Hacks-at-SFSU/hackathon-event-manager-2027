@@ -1,18 +1,10 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import prisma from '../config/prismaClient';
 import { supabase } from '../config/supabase';
 import { getDefaultStatusEmailTemplate } from './status-email.templates';
 
 dotenv.config();
-
-const sesClient = new SESClient({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-  }
-});
 
 interface EmailInput {
   to: string;
@@ -40,17 +32,28 @@ const escapeHtml = (value: string | null | undefined) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 
-export const sendPersonalizedEmail = ({ to, subject, html }: EmailInput) => {
-  const command = new SendEmailCommand({
-    Destination: { ToAddresses: [to] },
-    Message: {
-      Subject: { Data: subject },
-      Body: { Html: { Data: html } }
-    },
-    Source: `"SFHacks Team" <${process.env.SES_FROM_ADDRESS!}>`
+export const sendPersonalizedEmail = async ({ to, subject, html }: EmailInput) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+
+  const resend = new Resend(apiKey);
+  const { data, error } = await resend.emails.send({
+    from: process.env.RESEND_FROM_ADDRESS || 'SF Hacks <onboarding@resend.dev>',
+    to: [to],
+    subject,
+    html
   });
 
-  return sesClient.send(command);
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data?.id) {
+    throw new Error('Resend did not return a message ID');
+  }
+
+  return { MessageId: data.id };
 };
 
 export async function sendNewApplicationNotification(
@@ -131,7 +134,7 @@ function renderTemplate(template: string, variables: Record<string, string>): st
 /**
  * Sends a templated, triggered email (e.g. on application status change) and
  * always writes an EmailLog row, even on failure, so organizers can see what
- * went out without digging through SES/CloudWatch.
+ * went out without digging through the email provider dashboard.
  */
 export async function sendTemplatedEmail(
   eventId: string,

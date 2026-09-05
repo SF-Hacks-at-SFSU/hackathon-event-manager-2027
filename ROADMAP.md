@@ -30,7 +30,7 @@ untested assumption.
   one talks to the live tRPC router.
 - **Triggered, templated email**: `EmailTemplate`/`EmailLog` models,
   `sendTemplatedEmail()` (looks up a template by event+key, renders
-  `{{variables}}`, sends via SES, always logs the result). Wired into
+  `{{variables}}`, sends via Resend, always logs the result). Wired into
   `applications.updateStatus` so accept/reject/waitlist actually sends mail
   instead of requiring a separate manual bulk-email step.
 - **Day-of-event announcements** (`Announcement` model + CRUD, read by any
