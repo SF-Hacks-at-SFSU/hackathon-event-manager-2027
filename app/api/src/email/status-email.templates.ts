@@ -20,7 +20,7 @@ export const statusEmailTemplates: Record<string, StatusEmailTemplate> = {
     subject: 'You’re accepted — SF Hacks × GDG AI Hackathon',
     bodyHtml: shell(
       'You’re in.',
-      'Your application has been accepted. Sign in to your dashboard for your event details and check-in QR.'
+      'Your application has been accepted. Your personal check-in QR is included below and attached to this email. You can also find it in your participant dashboard.'
     )
   },
   application_rejected: {

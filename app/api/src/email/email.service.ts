@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import QRCode from 'qrcode';
 import dotenv from 'dotenv';
 import prisma from '../config/prismaClient';
 import { supabase } from '../config/supabase';
@@ -10,12 +11,20 @@ interface EmailInput {
   to: string;
   subject: string;
   html: string;
+  attachments?: EmailAttachment[];
+}
+
+interface EmailAttachment {
+  filename: string;
+  content: string;
+  contentId?: string;
 }
 
 interface TemplatedEmailOptions {
   toEmailOverride?: string | null;
   subjectPrefix?: string;
   dryRun?: boolean;
+  checkInToken?: string;
 }
 
 export interface TemplatedEmailResult {
@@ -32,7 +41,7 @@ const escapeHtml = (value: string | null | undefined) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 
-export const sendPersonalizedEmail = async ({ to, subject, html }: EmailInput) => {
+export const sendPersonalizedEmail = async ({ to, subject, html, attachments }: EmailInput) => {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured');
@@ -43,7 +52,8 @@ export const sendPersonalizedEmail = async ({ to, subject, html }: EmailInput) =
     from: process.env.RESEND_FROM_ADDRESS || 'SF Hacks <onboarding@resend.dev>',
     to: [to],
     subject,
-    html
+    html,
+    attachments
   });
 
   if (error) {
@@ -174,7 +184,33 @@ export async function sendTemplatedEmail(
   const renderedSubject = renderTemplate(template.subject, variables)
     .replace(/[\r\n]+/g, ' ')
     .trim();
-  const renderedHtml = renderTemplate(template.bodyHtml, safeHtmlVariables);
+  let renderedHtml = renderTemplate(template.bodyHtml, safeHtmlVariables);
+  let attachments: EmailAttachment[] | undefined;
+
+  if (options.checkInToken) {
+    const qrCode = await QRCode.toBuffer(options.checkInToken, {
+      type: 'png',
+      width: 360,
+      margin: 2,
+      errorCorrectionLevel: 'M'
+    });
+
+    attachments = [
+      {
+        filename: 'sf-hacks-check-in-qr.png',
+        content: qrCode.toString('base64'),
+        contentId: 'sf-hacks-check-in-qr'
+      }
+    ];
+    renderedHtml += `
+      <div style="max-width:560px;margin:24px auto;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1d1d1f">
+        <h2 style="margin:0 0 8px;font-size:22px">Your check-in QR</h2>
+        <p style="margin:0 0 16px;color:#6e6e73">Save this email and show the QR code when you arrive.</p>
+        <img src="cid:sf-hacks-check-in-qr" width="280" height="280" alt="Your SF Hacks check-in QR code" style="display:block;margin:0 auto;max-width:100%;background:#ffffff;border:12px solid #ffffff;border-radius:12px" />
+        <p style="margin:12px 0 0;font-size:13px;color:#86868b">The same pass is available from your participant dashboard.</p>
+      </div>
+    `;
+  }
 
   let toEmail = options.toEmailOverride ?? null;
   let authErrorMessage: string | null = null;
@@ -214,7 +250,8 @@ export async function sendTemplatedEmail(
     const result = await sendPersonalizedEmail({
       to: toEmail,
       subject: `${options.subjectPrefix ?? ''}${renderedSubject}`,
-      html: renderedHtml
+      html: renderedHtml,
+      attachments
     });
 
     await prisma.emailLog.create({
