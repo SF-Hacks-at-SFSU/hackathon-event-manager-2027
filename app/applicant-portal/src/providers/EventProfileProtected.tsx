@@ -5,11 +5,12 @@ import { useUser } from '@/hooks/auth';
 import { trpc } from '@/utils/trpc';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useEventSelection } from './EventSelectionProvider';
 
 export const UserProfileProtectedProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { user, isLoading: userLoading } = useUser();
-  const eventId = process.env.NEXT_PUBLIC_EVENT_ID;
+  const { id: eventId } = useEventSelection();
 
   const {
     data: profile,

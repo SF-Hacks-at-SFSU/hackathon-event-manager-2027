@@ -6,6 +6,9 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import Image from 'next/image';
 import Link from 'next/link';
 import Providers from '../providers';
+import { cookies } from 'next/headers';
+import { EVENT_COOKIE_NAME, resolveEventSelection } from '@/lib/event-selection';
+import PortalEventLink from '@/components/PortalEventLink';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -53,18 +56,24 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const event = resolveEventSelection(
+    cookieStore.get(EVENT_COOKIE_NAME)?.value,
+    process.env.NEXT_PUBLIC_EVENT_ID
+  );
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col`}
       >
         <GlobalProgressBar />
-        <Providers>
+        <Providers event={event}>
           <header className="sticky top-0 z-40 border-b border-white/8 bg-background/80 backdrop-blur-xl">
             <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
               <Link href="/" className="flex items-center gap-3" aria-label="SF Hacks home">
@@ -74,21 +83,7 @@ export default function RootLayout({
                   <p className="text-xs text-muted-foreground">Application portal</p>
                 </div>
               </Link>
-              <Link
-                href="https://sfhacks.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative block h-9 w-[72px] overflow-hidden rounded-md opacity-90 transition hover:opacity-100"
-                aria-label="Google Developer Groups"
-              >
-                <Image
-                  src="/gdg-logo.png"
-                  alt="Google Developer Groups"
-                  width={300}
-                  height={169}
-                  className="absolute left-[-18px] top-[-66px] h-auto w-[300px] max-w-none"
-                />
-              </Link>
+              <PortalEventLink />
             </div>
           </header>
           <main className="flex-1">{children}</main>

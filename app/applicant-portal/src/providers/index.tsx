@@ -3,15 +3,27 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SupabaseAuthProvider } from './SupabaseAuthProvider';
 import { TRPCProvider } from './trpcProvider';
+import { EventSelectionProvider } from './EventSelectionProvider';
+import type { EventSelection } from '@/lib/event-selection';
 
 const queryClient = new QueryClient();
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  event
+}: {
+  children: React.ReactNode;
+  event: EventSelection;
+}) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SupabaseAuthProvider>
-        <TRPCProvider queryClient={queryClient}>{children}</TRPCProvider>
-      </SupabaseAuthProvider>
+      <EventSelectionProvider event={event}>
+        <SupabaseAuthProvider>
+          <TRPCProvider queryClient={queryClient} eventId={event.id}>
+            {children}
+          </TRPCProvider>
+        </SupabaseAuthProvider>
+      </EventSelectionProvider>
     </QueryClientProvider>
   );
 }

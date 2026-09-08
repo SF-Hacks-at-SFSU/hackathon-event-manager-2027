@@ -7,6 +7,15 @@ This repository is separate from the public event websites:
 - [sfhacks.io](https://sfhacks.io) is the main SF Hacks website.
 - [gdg.sfhacks.io](https://gdg.sfhacks.io) is the SF Hacks × GDG event website.
 - [app.sfhacks.io](https://app.sfhacks.io) is the shared participant application portal.
+
+Public event-specific application entry points:
+
+- [app.sfhacks.io/events/gdg](https://app.sfhacks.io/events/gdg) selects the SF Hacks × GDG event.
+- [app.sfhacks.io/events/sfhacks-2027](https://app.sfhacks.io/events/sfhacks-2027) selects SF Hacks 2027.
+
+The selected event is stored in a same-site cookie so it persists through authentication and page
+navigation. The application API still validates the event and scopes every request by its UUID.
+
 - [admin.sfhacks.io](https://admin.sfhacks.io) is the organizer portal.
 
 The public websites send applicants to the participant portal. The active event is selected by an event UUID, so the same portals and Supabase project can safely support the GDG event, SF Hacks 2027, and future events without deleting earlier data.

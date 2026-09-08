@@ -6,6 +6,7 @@ import { trpc } from '@/utils/trpc';
 import { CheckCircle2, Copy, ExternalLink, QrCode, Share2 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
+import { useEventSelection } from '@/providers/EventSelectionProvider';
 
 type ApplicationStatus = 'PENDING' | 'REJECTED' | 'ACCEPTED' | 'WAITLISTED';
 
@@ -35,15 +36,8 @@ const statusCopy: Record<
   }
 };
 
-function getEventWebsite(eventName?: string | null) {
-  if (process.env.NEXT_PUBLIC_EVENT_WEBSITE_URL) {
-    return process.env.NEXT_PUBLIC_EVENT_WEBSITE_URL;
-  }
-
-  return eventName?.toLowerCase().includes('gdg') ? 'https://gdg.sfhacks.io' : 'https://sfhacks.io';
-}
-
 export default function ParticipantPass() {
+  const selectedEvent = useEventSelection();
   const { data: event } = trpc.events.me.useQuery(undefined, { retry: false });
   const {
     data: team,
@@ -69,7 +63,7 @@ export default function ParticipantPass() {
     enabled: isAccepted,
     retry: false
   });
-  const eventWebsite = getEventWebsite(event?.name);
+  const eventWebsite = selectedEvent.website;
   const copy = statusCopy[safeStatus];
 
   const shareEvent = async () => {

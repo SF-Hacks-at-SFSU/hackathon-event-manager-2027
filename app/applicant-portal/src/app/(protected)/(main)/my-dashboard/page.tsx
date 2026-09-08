@@ -8,10 +8,12 @@ import EventHeader from '@/components/ui/event-header';
 import ErrorStateAlert from '../components/ErrorStateAlert';
 import ParticipantPass from './components/ParticipantPass';
 import Link from 'next/link';
+import { useEventSelection } from '@/providers/EventSelectionProvider';
 export default function MyDashboardView() {
+  const selectedEvent = useEventSelection();
   // ✅ All hooks at the top
   const { error } = trpc.events.getById.useQuery({
-    id: process.env.NEXT_PUBLIC_EVENT_ID || ''
+    id: selectedEvent.id
   });
   // ✅ Conditional rendering after all hooks
   if (error) {
