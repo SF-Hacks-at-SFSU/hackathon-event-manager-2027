@@ -98,6 +98,9 @@ export async function sendNewApplicationNotification(
           <tr><td><strong>School email</strong></td><td>${escapeHtml(application.schoolEmail || 'Not provided')}</td></tr>
           <tr><td><strong>School</strong></td><td>${escapeHtml(application.school || 'Not provided')}</td></tr>
           <tr><td><strong>Experience</strong></td><td>${escapeHtml(application.experienceLevel || 'Not provided')}</td></tr>
+          <tr><td><strong>Team preference</strong></td><td>${escapeHtml(application.teamPreference || 'Not provided')}</td></tr>
+          <tr><td><strong>GitHub</strong></td><td>${escapeHtml(application.githubUrl || 'Not provided')}</td></tr>
+          <tr><td><strong>Discord</strong></td><td>${escapeHtml(application.discordUsername || 'Not provided')}</td></tr>
           <tr><td><strong>Application ID</strong></td><td>${escapeHtml(application.id)}</td></tr>
         </table>
         <p><a href="${escapeHtml(adminPortalUrl)}">Review applications in the admin portal</a></p>

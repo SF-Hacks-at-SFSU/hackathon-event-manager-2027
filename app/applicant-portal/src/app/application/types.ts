@@ -25,6 +25,7 @@ export type CheckboxGroupField = {
   label: string;
   options: { name: string; label: string }[];
   helperText?: string;
+  required?: boolean;
 };
 
 export type CountryDropdownField = { type: 'country-dropdown'; label: string };

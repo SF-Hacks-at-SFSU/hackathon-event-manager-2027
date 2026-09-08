@@ -383,10 +383,14 @@ export default function ApplyPage() {
 
               // Checkbox Group
               if (field.type === 'checkbox-group') {
+                const groupError = form.formState.errors[key];
                 return (
                   <FieldGroup key={key}>
                     <div className="space-y-3">
-                      <FieldLabel>{field.label}</FieldLabel>
+                      <FieldLabel>
+                        {field.label}
+                        {field.required && <RequiredStar />}
+                      </FieldLabel>
                       <div className="flex flex-col gap-3 pl-1">
                         {field.options.map(
                           (opt: { name: string; label: string }, index: number) => (
@@ -400,7 +404,27 @@ export default function ApplyPage() {
                                     type="checkbox"
                                     {...f}
                                     checked={f.value ?? false}
-                                    onChange={(e) => f.onChange(e.target.checked)}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+
+                                      if (checked && opt.name === 'dietaryNone') {
+                                        field.options
+                                          .filter((option) => option.name !== 'dietaryNone')
+                                          .forEach((option) =>
+                                            form.setValue(option.name, false, {
+                                              shouldDirty: true,
+                                              shouldValidate: false
+                                            })
+                                          );
+                                      } else if (checked) {
+                                        form.setValue('dietaryNone', false, {
+                                          shouldDirty: true,
+                                          shouldValidate: false
+                                        });
+                                      }
+
+                                      f.onChange(checked);
+                                    }}
                                     className="size-5 cursor-pointer rounded border-input accent-primary"
                                   />
                                   <span className="text-sm">
@@ -416,6 +440,11 @@ export default function ApplyPage() {
                           )
                         )}
                       </div>
+                      {groupError && (
+                        <p className="text-sm text-destructive">
+                          {String(groupError.message || 'Please select at least one option.')}
+                        </p>
+                      )}
                     </div>
                   </FieldGroup>
                 );

@@ -24,6 +24,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { trpc } from '@/utils/trpc';
+import { useUser } from '@/hooks/auth';
 import { useRouter } from 'next/navigation';
 import nProgress from 'nprogress';
 import { useEffect, useState } from 'react';
@@ -32,6 +33,7 @@ import { useCreateProfile } from './hooks';
 
 export default function CreateProfile() {
   const { form, handleSubmit, isLoading } = useCreateProfile();
+  const { user } = useUser();
   const router = useRouter();
 
   const { data: profile, isLoading: profileLoading } = trpc.profile.me.useQuery(undefined, {
@@ -80,6 +82,16 @@ export default function CreateProfile() {
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
+              <Field>
+                <FieldLabel>
+                  Email Address
+                  <RequiredStar />
+                </FieldLabel>
+                <Input value={user?.email ?? ''} type="email" readOnly aria-readonly="true" />
+                <FieldDescription>
+                  Verified through the email address you used to sign in.
+                </FieldDescription>
+              </Field>
               <Controller
                 name="dob"
                 control={form.control}

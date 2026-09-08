@@ -31,14 +31,23 @@ model Application {
   levelOfStudy              String?             @map("level_of_study")
   countryOfResidence        String?             @map("country_of_residence")
   linkedinUrl               String?             @map("linkedin_url")
+  githubUrl                 String?             @map("github_url")
+  discordUsername           String?             @map("discord_username")
+  teamPreference            String?             @map("team_preference")
   mlhAuthorizedPromoEmail   Boolean?            @map("mlh_authorized_promo_email")
   mlhAuthorizedDataShare    Boolean?            @map("mlh_authorized_data_share")
   mlhCodeOfConductAgreement Boolean?            @map("mlh_code_of_conduct_aggreemeant")
+  sfHacksPromoEmail         Boolean?            @map("sf_hacks_promo_email")
+  photoReleaseConsent       Boolean?            @map("photo_release_consent")
+  resumeShareConsent        Boolean?            @map("resume_share_consent")
+  dietaryNone               Boolean?            @map("dietary_none")
   dietaryVegetarian         Boolean?            @map("dietary_vegetarian")
   dietaryVegan              Boolean?            @map("dietary_vegan")
   dietaryCeliacDisease      Boolean?            @map("dietary_celiac_disease")
   dietaryKosher             Boolean?            @map("dietary_kosher")
   dietaryHalal              Boolean?            @map("dietary_halal")
+  dietaryNutAllergy         Boolean?            @map("dietary_nut_allergy")
+  dietaryOther              Boolean?            @map("dietary_other")
   gender                    String?
   pronouns                  String?
   raceEthnicity             String?             @map("race_ethnicity")
@@ -346,6 +355,7 @@ enum t_shirt_size {
   US_L
   US_XL
   US_XXL
+  US_XXXL
   UK_6
   UK_8
   UK_10

@@ -1,6 +1,6 @@
 /** Step Definitions */
 
-import { StepBasics, StepInsights, StepMLH, StepPreferences } from './schemas';
+import { StepAgreements, StepBasics, StepInsights, StepPreferences } from './schemas';
 import { StepConfig } from './types';
 
 // Due to the large union created from combining typeof step schemas,
@@ -28,31 +28,21 @@ export const steps: StepConfig<any>[] = [
         label: 'What is the highest level of formal education that you have completed?',
         fillerText: 'Select your level of study',
         options: [
-          {
-            value: 'Less than Secondary / High School',
-            label: 'Less than Secondary / High School'
-          },
           { value: 'Secondary / High School', label: 'Secondary / High School' },
           {
-            value: 'Undergraduate University (2 year - community college or similar)',
-            label: 'Undergraduate University (2 year - community college or similar)'
+            value: '2 year - community college or similar',
+            label: '2 year - community college or similar'
           },
           {
             value: 'Undergraduate University (3+ year)',
             label: 'Undergraduate University (3+ year)'
           },
           {
-            value: 'Graduate University (Masters, Professional, Doctoral, etc)',
-            label: 'Graduate University (Masters, Professional, Doctoral, etc)'
+            value: 'Graduate University',
+            label: 'Graduate University'
           },
           { value: 'Code School / Bootcamp', label: 'Code School / Bootcamp' },
-          {
-            value: 'Other Vocational / Trade Program or Apprenticeship',
-            label: 'Other Vocational / Trade Program or Apprenticeship'
-          },
-          { value: 'Post Doctorate', label: 'Post Doctorate' },
-          { value: 'I’m not currently a student', label: 'I’m not currently a student' },
-          { value: 'Prefer not to answer', label: 'Prefer not to answer' }
+          { value: 'I’m not currently a student', label: 'I’m not currently a student' }
         ],
         hasOtherOption: true,
         otherLabel: 'Other'
@@ -65,8 +55,19 @@ export const steps: StepConfig<any>[] = [
         type: 'text',
         label: 'LinkedIn URL',
         fillerText: 'https://linkedin.com/in/yourprofile',
-        helperText:
-          'In accordance with MLH registration requirements, please provide a URL to your LinkedIn profile. Aside from registration, we may use this information to help connect you with partners after the event for potential job opportunities.'
+        helperText: 'Add the full URL to your LinkedIn profile.'
+      },
+      githubUrl: {
+        type: 'text',
+        label: 'GitHub URL',
+        fillerText: 'https://github.com/yourname',
+        helperText: 'Add the full URL to your GitHub profile.'
+      },
+      discordUsername: {
+        type: 'text',
+        label: 'Discord Username',
+        fillerText: 'yourname',
+        helperText: 'Enter the username organizers can use to reach you on Discord.'
       }
     }
   },
@@ -82,23 +83,26 @@ export const steps: StepConfig<any>[] = [
         fillerText: 'Select your preferred T-shirt size',
         options: [
           { value: 'US_XS', label: 'XS' },
-          { value: 'US_S', label: 'SM' },
+          { value: 'US_S', label: 'S' },
           { value: 'US_M', label: 'M' },
           { value: 'US_L', label: 'L' },
           { value: 'US_XL', label: 'XL' },
-          { value: 'US_XXL', label: 'XXL' }
+          { value: 'US_XXL', label: '2XL' },
+          { value: 'US_XXXL', label: '3XL' }
         ],
         hasOtherOption: false
       },
       dietaryGroup: {
         type: 'checkbox-group',
-        label: 'Dietary Restrictions (For in-person events)',
+        label: 'Dietary Restrictions',
+        required: true,
         options: [
+          { name: 'dietaryNone', label: 'None' },
           { name: 'dietaryVegetarian', label: 'Vegetarian' },
           { name: 'dietaryVegan', label: 'Vegan' },
-          { name: 'dietaryCeliacDisease', label: 'Celiac Disease' },
-          { name: 'dietaryKosher', label: 'Kosher' },
-          { name: 'dietaryHalal', label: 'Halal' }
+          { name: 'dietaryHalal', label: 'Halal' },
+          { name: 'dietaryNutAllergy', label: 'Nut allergy' },
+          { name: 'dietaryOther', label: 'Other' }
         ]
       }
     }
@@ -109,6 +113,26 @@ export const steps: StepConfig<any>[] = [
     description: 'This information helps us build a diverse and inclusive community.',
     schema: StepInsights,
     fields: {
+      experienceLevel: {
+        type: 'dropdown',
+        label: 'Experience Level',
+        fillerText: 'Select your hackathon experience',
+        options: [
+          { value: 'First-Time Participant', label: 'First-Time Participant' },
+          { value: 'Experienced Participant', label: 'Experienced Participant' },
+          { value: 'Advanced Participant', label: 'Advanced Participant' }
+        ]
+      },
+      teamPreference: {
+        type: 'dropdown',
+        label: 'Team Preference',
+        fillerText: 'Select your team preference',
+        options: [
+          { value: 'I have a team', label: 'I have a team' },
+          { value: 'Match me with a team', label: 'Match me with a team' },
+          { value: 'I will decide at the event', label: 'I will decide at the event' }
+        ]
+      },
       majorFieldOfStudy: {
         type: 'dropdown',
         label: 'What is your major or primary field of study?',
@@ -206,13 +230,26 @@ export const steps: StepConfig<any>[] = [
     }
   },
   {
-    key: 'mlh',
-    label: 'MLH Agreements',
-    description:
-      'We are currently in the process of partnering with MLH. The following 3 checkboxes are for this partnership. If we do not end up partnering with MLH, your information will not be shared.',
-    schema: StepMLH,
-    seperateLastFieldWithLine: true,
+    key: 'agreements',
+    label: 'Agreements & Consent',
+    description: 'Please review the event permissions and participation agreements.',
+    schema: StepAgreements,
     fields: {
+      sfHacksPromoEmail: {
+        type: 'checkbox',
+        label:
+          'I authorize SF Hacks and its event co-hosts to send me occasional emails about relevant events, career opportunities, and community updates.'
+      },
+      photoReleaseConsent: {
+        type: 'checkbox',
+        label:
+          'I agree that photos or videos of me taken at the event may be used on social media and that I may be tagged in related posts.'
+      },
+      resumeShareConsent: {
+        type: 'checkbox',
+        label:
+          'I agree that my resume may be shared with sponsor companies for recruiting purposes.'
+      },
       mlhCodeOfConductAgreement: {
         type: 'checkbox',
         label: (
@@ -265,11 +302,6 @@ export const steps: StepConfig<any>[] = [
             .
           </>
         )
-      },
-      mlhAuthorizedPromoEmail: {
-        type: 'checkbox',
-        label:
-          'I authorize MLH to send me occasional emails about relevant events, career opportunities, and community announcements.'
       }
     }
   }
