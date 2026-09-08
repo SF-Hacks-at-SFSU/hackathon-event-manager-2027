@@ -1,8 +1,8 @@
 import { Resend } from 'resend';
-import QRCode from 'qrcode';
 import dotenv from 'dotenv';
 import prisma from '../config/prismaClient';
 import { supabase } from '../config/supabase';
+import { buildCheckInEmailAssets } from './check-in-email';
 import { getDefaultStatusEmailTemplate } from './status-email.templates';
 
 dotenv.config();
@@ -17,6 +17,7 @@ interface EmailInput {
 interface EmailAttachment {
   filename: string;
   content: string;
+  contentType?: string;
   contentId?: string;
 }
 
@@ -188,28 +189,12 @@ export async function sendTemplatedEmail(
   let attachments: EmailAttachment[] | undefined;
 
   if (options.checkInToken) {
-    const qrCode = await QRCode.toBuffer(options.checkInToken, {
-      type: 'png',
-      width: 360,
-      margin: 2,
-      errorCorrectionLevel: 'M'
-    });
-
-    attachments = [
-      {
-        filename: 'sf-hacks-check-in-qr.png',
-        content: qrCode.toString('base64'),
-        contentId: 'sf-hacks-check-in-qr'
-      }
-    ];
-    renderedHtml += `
-      <div style="max-width:560px;margin:24px auto;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1d1d1f">
-        <h2 style="margin:0 0 8px;font-size:22px">Your check-in QR</h2>
-        <p style="margin:0 0 16px;color:#6e6e73">Save this email and show the QR code when you arrive.</p>
-        <img src="cid:sf-hacks-check-in-qr" width="280" height="280" alt="Your SF Hacks check-in QR code" style="display:block;margin:0 auto;max-width:100%;background:#ffffff;border:12px solid #ffffff;border-radius:12px" />
-        <p style="margin:12px 0 0;font-size:13px;color:#86868b">The same pass is available from your participant dashboard.</p>
-      </div>
-    `;
+    const checkInAssets = await buildCheckInEmailAssets(
+      options.checkInToken,
+      process.env.PARTICIPANT_PORTAL_URL
+    );
+    attachments = checkInAssets.attachments;
+    renderedHtml += checkInAssets.html;
   }
 
   let toEmail = options.toEmailOverride ?? null;
