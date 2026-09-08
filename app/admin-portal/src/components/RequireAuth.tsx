@@ -15,7 +15,14 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }, [isLoading, user, router]);
 
   if (isLoading || !user) {
-    return <div className="p-8 text-sm text-gray-500">Loading…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#f5f5f7]">
+        <div className="flex items-center gap-3 text-sm font-medium text-gray-500">
+          <span className="size-2 animate-pulse rounded-full bg-[#d41486]" />
+          Preparing your workspace…
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;

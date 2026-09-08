@@ -113,22 +113,20 @@ export default function CheckInPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-            Event day
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold">Participant check-in</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="admin-kicker">Event day</p>
+          <h1 className="admin-title">Participant check-in</h1>
+          <p className="admin-subtitle">
             Scan the secure QR shown in an accepted participant’s dashboard.
           </p>
         </div>
         <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${
             mode.data?.mode === "live"
-              ? "bg-emerald-100 text-emerald-900"
-              : "bg-amber-100 text-amber-900"
+              ? "bg-emerald-50 text-emerald-800 ring-emerald-600/15"
+              : "bg-amber-50 text-amber-800 ring-amber-600/15"
           }`}
         >
           {mode.data?.mode === "live"
@@ -137,12 +135,25 @@ export default function CheckInPage() {
         </span>
       </div>
 
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {[
+          ["Approved", applications.data?.filter((app) => app.publicStatus === "accepted").length ?? 0],
+          ["Checked in", checkedInApplications.length],
+          ["Remaining", Math.max(0, (applications.data?.filter((app) => app.publicStatus === "accepted").length ?? 0) - checkedInApplications.length)],
+        ].map(([label, value]) => (
+          <div key={label} className="admin-card px-5 py-4 last:col-span-2 sm:last:col-span-1">
+            <p className="text-xs font-medium text-gray-500">{label}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-[-0.04em]">{value}</p>
+          </div>
+        ))}
+      </div>
+
       {mode.data?.mode === "test" && (
         <>
           <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
             Scans are validated, but nobody will be marked as checked in.
           </div>
-          <section className="mb-5 rounded-2xl border p-5">
+          <section className="admin-card mb-6 p-5 sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
               Safe test pass
             </p>
@@ -157,7 +168,7 @@ export default function CheckInPage() {
               <select
                 value={testApplicationId}
                 onChange={(event) => setTestApplicationId(event.target.value)}
-                className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2.5 text-sm"
+                className="admin-input min-w-0 flex-1 text-sm"
               >
                 <option value="">Choose an applicant</option>
                 {applications.data?.map((application) => (
@@ -179,7 +190,7 @@ export default function CheckInPage() {
                 onClick={() =>
                   testPass.mutate({ applicationId: testApplicationId })
                 }
-                className="rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="admin-button"
               >
                 Generate test pass
               </button>
@@ -208,7 +219,7 @@ export default function CheckInPage() {
         </>
       )}
 
-      <section className="overflow-hidden rounded-3xl border bg-gray-950">
+      <section className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#111113] shadow-[0_18px_50px_rgba(0,0,0,0.14)]">
         <div className="relative flex min-h-80 items-center justify-center">
           {cameraActive ? (
             <video
@@ -219,8 +230,8 @@ export default function CheckInPage() {
             />
           ) : (
             <div className="p-10 text-center text-white">
-              <div className="mx-auto mb-5 grid size-20 place-items-center rounded-3xl border border-white/20 bg-white/10 text-3xl">
-                ⌁
+              <div className="mx-auto mb-5 grid size-20 place-items-center rounded-[1.4rem] border border-white/15 bg-white/[0.07] text-2xl shadow-inner">
+                <span className="grid size-9 place-items-center rounded-lg border border-white/50">⌁</span>
               </div>
               <p className="text-lg font-medium">Ready to scan</p>
               <p className="mt-2 text-sm text-gray-400">
@@ -237,21 +248,21 @@ export default function CheckInPage() {
               setCameraActive((active) => !active);
             }}
             disabled={scan.isPending}
-            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-gray-950 disabled:opacity-50"
+            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-gray-950 shadow-sm transition hover:-translate-y-0.5 disabled:opacity-50"
           >
             {cameraActive ? "Stop camera" : "Start camera"}
           </button>
         </div>
       </section>
 
-      <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-gray-400">
+      <div className="my-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">
         <div className="h-px flex-1 bg-gray-200" />
-        or paste a test pass
+        Manual entry
         <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       <form
-        className="flex gap-2"
+        className="admin-card flex gap-2 p-2"
         onSubmit={(event) => {
           event.preventDefault();
           submitToken(manualToken);
@@ -261,12 +272,12 @@ export default function CheckInPage() {
           value={manualToken}
           onChange={(event) => setManualToken(event.target.value)}
           placeholder="sfh1…"
-          className="min-w-0 flex-1 rounded-xl border px-3 py-2.5 text-sm"
+          className="min-w-0 flex-1 rounded-full border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-gray-400"
         />
         <button
           type="submit"
           disabled={!manualToken.trim() || scan.isPending}
-          className="rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          className="admin-button"
         >
           Validate
         </button>
@@ -274,7 +285,7 @@ export default function CheckInPage() {
 
       {cameraError && (
         <div
-          className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+          className="mt-5 rounded-2xl border border-red-200/70 bg-red-50/90 p-4 text-sm text-red-800 shadow-sm"
           role="alert"
         >
           {cameraError}
@@ -283,7 +294,7 @@ export default function CheckInPage() {
 
       {result && (
         <div
-          className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950"
+          className="mt-5 rounded-2xl border border-emerald-200/70 bg-emerald-50/90 p-5 text-emerald-950 shadow-sm"
           role="status"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.16em]">
@@ -309,8 +320,8 @@ export default function CheckInPage() {
         </div>
       )}
 
-      <section className="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+      <section className="admin-card mt-8 overflow-hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/[0.06] px-5 py-5 sm:px-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
               Attendance
@@ -322,7 +333,7 @@ export default function CheckInPage() {
               This list refreshes automatically every 15 seconds.
             </p>
           </div>
-          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/10">
             {checkedInApplications.length} checked in
           </span>
         </div>
@@ -343,11 +354,11 @@ export default function CheckInPage() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-black/[0.055]">
             {checkedInApplications.map((application) => (
               <div
                 key={application.id}
-                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 px-5 py-4 transition hover:bg-black/[0.018] sm:flex-row sm:items-center sm:justify-between sm:px-6"
               >
                 <div>
                   <p className="font-medium text-gray-950">
