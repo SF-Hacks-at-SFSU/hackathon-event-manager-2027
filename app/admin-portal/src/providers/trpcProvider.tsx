@@ -8,12 +8,13 @@ import { useMemo } from 'react';
 
 export const TRPCProvider = ({
   children,
-  queryClient
+  queryClient,
+  eventId
 }: {
   children: React.ReactNode;
   queryClient: QueryClient;
+  eventId: string;
 }) => {
-  const eventId = process.env.NEXT_PUBLIC_EVENT_ID;
   const session = useUserSession();
   const trpcClient = useMemo(
     () =>
@@ -24,7 +25,7 @@ export const TRPCProvider = ({
             headers() {
               const token = session.data?.access_token;
               return {
-                ...(eventId ? { 'x-event-id': eventId } : {}),
+                'x-event-id': eventId,
                 ...(token ? { authorization: `Bearer ${token}` } : {})
               };
             }

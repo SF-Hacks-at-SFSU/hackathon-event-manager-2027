@@ -4,6 +4,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { useSignOut, useUser } from "@/hooks/auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { EventSwitcher } from "@/components/EventSwitcher";
+import { useEventSelection } from "@/providers/EventSelectionProvider";
 
 const NAV = [
   { href: "/dashboard/applications", label: "Applications", marker: "A" },
@@ -51,6 +53,7 @@ function Navigation() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const signOut = useSignOut();
   const { user } = useUser();
+  const event = useEventSelection();
   const initial = user?.email?.charAt(0).toUpperCase() ?? "S";
 
   return (
@@ -79,6 +82,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
 
+          <div className="mb-4 lg:mb-5">
+            <EventSwitcher />
+          </div>
+
           <Navigation />
 
           <div className="mt-auto hidden border-t border-black/[0.07] pt-4 lg:block">
@@ -103,7 +110,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         <main className="min-w-0 px-4 py-7 sm:px-7 lg:px-10 lg:py-10 xl:px-14">
-          <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+          <div className="mx-auto w-full max-w-[1440px]">
+            <div className="mb-6 flex items-center gap-2 text-xs text-gray-500 lg:mb-8">
+              <span className="inline-block size-2 rounded-full bg-[#d41486] shadow-[0_0_0_4px_rgba(212,20,134,0.09)]" />
+              <span>Viewing</span>
+              <span className="font-semibold text-gray-900">{event.name}</span>
+            </div>
+            {children}
+          </div>
         </main>
       </div>
     </RequireAuth>
