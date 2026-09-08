@@ -6,7 +6,7 @@
 import { trpc } from '@/utils/trpc';
 import EventHeader from '@/components/ui/event-header';
 import ErrorStateAlert from '../components/ErrorStateAlert';
-import TeamView from './components/TeamView';
+import ParticipantPass from './components/ParticipantPass';
 import Link from 'next/link';
 export default function MyDashboardView() {
   // ✅ All hooks at the top
@@ -42,29 +42,10 @@ export default function MyDashboardView() {
   }
 
   return (
-    <main className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
-      <section className="space-y-6">
-        <EventHeader />
-        <div className="portal-surface p-6 sm:p-8">
-          <p className="portal-eyebrow">Application submitted</p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight">You’re all set for now.</h2>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-            We’ll show your decision here when applications are reviewed. In the meantime, you can
-            invite teammates and keep your team details up to date.
-          </p>
-        </div>
-      </section>
+    <main className="space-y-8">
+      <EventHeader />
+      <ParticipantPass />
       <section className="portal-surface p-6 sm:p-8">
-        <div className="mb-6">
-          <p className="portal-eyebrow">Team workspace</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your team</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Invite teammates and review everyone’s application status.
-          </p>
-        </div>
-        <TeamView />
-      </section>
-      <section className="portal-surface p-6 sm:p-8 lg:col-span-2">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="portal-eyebrow">More from SF Hacks</p>
