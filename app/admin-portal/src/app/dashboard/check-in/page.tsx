@@ -18,6 +18,7 @@ type ScanResult = {
 };
 
 export default function CheckInPage() {
+  const utils = trpc.useUtils();
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
   const scanLockedRef = useRef(false);
@@ -28,7 +29,7 @@ export default function CheckInPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const mode = trpc.checkIn.mode.useQuery();
   const applications = trpc.applications.listByEvent.useQuery(undefined, {
-    enabled: mode.data?.mode === "test",
+    refetchInterval: 15_000,
   });
   const testPass = trpc.checkIn.testPass.useMutation({
     onSuccess: (data) => {
@@ -43,6 +44,7 @@ export default function CheckInPage() {
     onSuccess: (data) => {
       setResult(data as ScanResult);
       setCameraActive(false);
+      void utils.applications.listByEvent.invalidate();
     },
     onError: (error) => {
       setCameraError(error.message);
@@ -97,6 +99,17 @@ export default function CheckInPage() {
     setResult(null);
     setCameraError(null);
     setManualToken("");
+  };
+
+  const checkedInApplications =
+    applications.data?.filter((application) => application.checkedIn) ?? [];
+
+  const formatCheckInTime = (value: string | Date | null) => {
+    if (!value) return "Time unavailable";
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(value));
   };
 
   return (
@@ -295,6 +308,73 @@ export default function CheckInPage() {
           </button>
         </div>
       )}
+
+      <section className="mt-8 overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+              Attendance
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-gray-950">
+              Already checked in
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              This list refreshes automatically every 15 seconds.
+            </p>
+          </div>
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+            {checkedInApplications.length} checked in
+          </span>
+        </div>
+
+        {applications.isLoading ? (
+          <p className="px-5 py-8 text-center text-sm text-gray-500">
+            Loading attendance…
+          </p>
+        ) : applications.isError ? (
+          <p className="px-5 py-8 text-center text-sm text-red-700">
+            {applications.error.message}
+          </p>
+        ) : checkedInApplications.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="font-medium text-gray-900">Nobody has checked in yet</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Participants will appear here immediately after a successful scan.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {checkedInApplications.map((application) => (
+              <div
+                key={application.id}
+                className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-medium text-gray-950">
+                    {[
+                      application.profile.firstName,
+                      application.profile.lastName,
+                    ]
+                      .filter(Boolean)
+                      .join(" ") || "Participant"}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Application {application.id}
+                  </p>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-sm font-medium text-emerald-700">
+                    Checked in
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formatCheckInTime(application.checkedInAt)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -1,9 +1,129 @@
 "use client";
 
-import { trpc } from "@/utils/trpc";
+import { RouterOutputs, trpc } from "@/utils/trpc";
 import { useState } from "react";
 
 const STATUSES = ["pending", "accepted", "rejected", "waitlisted"] as const;
+type ApplicationStatus = (typeof STATUSES)[number];
+type Application = RouterOutputs["applications"]["listByEvent"][number];
+
+const STATUS_SECTIONS: Array<{
+  status: ApplicationStatus;
+  title: string;
+  description: string;
+}> = [
+  {
+    status: "pending",
+    title: "Pending review",
+    description: "Applications that still need a decision.",
+  },
+  {
+    status: "accepted",
+    title: "Approved",
+    description: "Participants who have been accepted for this event.",
+  },
+  {
+    status: "waitlisted",
+    title: "Waitlisted",
+    description: "Applicants currently waiting for an available spot.",
+  },
+  {
+    status: "rejected",
+    title: "Not approved",
+    description: "Applications that were not accepted.",
+  },
+];
+
+function ApplicationsSection({
+  title,
+  description,
+  applications,
+  isUpdating,
+  onStatusChange,
+}: {
+  title: string;
+  description: string;
+  applications: Application[];
+  isUpdating: boolean;
+  onStatusChange: (applicationId: string, status: ApplicationStatus) => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+        <div>
+          <h2 className="font-semibold text-gray-950">{title}</h2>
+          <p className="mt-1 text-sm text-gray-500">{description}</p>
+        </div>
+        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+          {applications.length}
+        </span>
+      </div>
+
+      {applications.length === 0 ? (
+        <p className="px-5 py-8 text-center text-sm text-gray-500">
+          No applications in this section.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-5 py-3">Name</th>
+                <th className="px-5 py-3">School</th>
+                <th className="px-5 py-3">Check-in</th>
+                <th className="px-5 py-3">Change decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((application) => (
+                <tr key={application.id} className="border-b last:border-b-0">
+                  <td className="px-5 py-4 font-medium text-gray-950">
+                    {application.profile.firstName} {application.profile.lastName}
+                  </td>
+                  <td className="px-5 py-4 text-gray-600">
+                    {application.school ?? "—"}
+                  </td>
+                  <td className="px-5 py-4">
+                    {application.checkedIn ? (
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                        Checked in
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">Not checked in</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap gap-1.5">
+                      {STATUSES.map((status) => {
+                        const isCurrent =
+                          (application.publicStatus ?? "pending") === status;
+                        return (
+                          <button
+                            key={status}
+                            type="button"
+                            disabled={isUpdating || isCurrent}
+                            onClick={() => onStatusChange(application.id, status)}
+                            className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium capitalize transition disabled:cursor-default ${
+                              isCurrent
+                                ? "border-gray-950 bg-gray-950 text-white"
+                                : "border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function ApplicationsPage() {
   const utils = trpc.useUtils();
@@ -78,46 +198,25 @@ export default function ApplicationsPage() {
           {resultMessage.text}
         </div>
       )}
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b text-left text-gray-500">
-            <th className="py-2 pr-4">Name</th>
-            <th className="py-2 pr-4">School</th>
-            <th className="py-2 pr-4">Status</th>
-            <th className="py-2 pr-4">Set status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {applications.data?.map((app) => (
-            <tr key={app.id} className="border-b">
-              <td className="py-2 pr-4">
-                {app.profile.firstName} {app.profile.lastName}
-              </td>
-              <td className="py-2 pr-4">{app.school ?? "—"}</td>
-              <td className="py-2 pr-4">{app.publicStatus ?? "pending"}</td>
-              <td className="py-2 pr-4">
-                <div className="flex gap-1">
-                  {STATUSES.map((status) => (
-                    <button
-                      key={status}
-                      disabled={updateStatus.isPending}
-                      onClick={() =>
-                        updateStatus.mutate({
-                          applicationId: app.id,
-                          publicStatus: status,
-                        })
-                      }
-                      className="rounded border px-2 py-1 text-xs hover:bg-gray-100 disabled:opacity-50"
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="space-y-5">
+        {STATUS_SECTIONS.map((section) => (
+          <ApplicationsSection
+            key={section.status}
+            title={section.title}
+            description={section.description}
+            applications={
+              applications.data?.filter(
+                (application) =>
+                  (application.publicStatus ?? "pending") === section.status,
+              ) ?? []
+            }
+            isUpdating={updateStatus.isPending}
+            onStatusChange={(applicationId, publicStatus) =>
+              updateStatus.mutate({ applicationId, publicStatus })
+            }
+          />
+        ))}
+      </div>
     </div>
   );
 }
