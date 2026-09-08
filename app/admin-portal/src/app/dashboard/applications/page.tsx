@@ -51,7 +51,9 @@ function ApplicationsSection({
     <section className="admin-card overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/[0.06] px-5 py-5 sm:px-6">
         <div>
-          <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-gray-950">{title}</h2>
+          <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-gray-950">
+            {title}
+          </h2>
           <p className="mt-1 text-[13px] text-gray-500">{description}</p>
         </div>
         <span className="grid min-w-7 place-items-center rounded-full bg-black/[0.055] px-2.5 py-1 text-xs font-semibold text-gray-600">
@@ -76,12 +78,21 @@ function ApplicationsSection({
             </thead>
             <tbody>
               {applications.map((application) => (
-                <tr key={application.id} className="border-b border-black/[0.055] transition last:border-b-0 hover:bg-black/[0.018]">
-                  <td className="px-5 py-4 font-medium text-gray-950 sm:px-6">
-                    {application.profile.firstName} {application.profile.lastName}
+                <tr
+                  key={application.id}
+                  className="border-b border-black/[0.055] transition last:border-b-0 hover:bg-black/[0.018]"
+                >
+                  <td className="px-5 py-4 sm:px-6">
+                    <p className="font-medium text-gray-950">
+                      {application.profile.firstName}{" "}
+                      {application.profile.lastName}
+                    </p>
+                    <p className="mt-1 max-w-64 truncate text-xs font-normal text-gray-500">
+                      {application.applicantEmail ?? "Email unavailable"}
+                    </p>
                   </td>
                   <td className="max-w-xs truncate px-5 py-4 text-gray-500 sm:px-6">
-                    {application.school ?? "—"}
+                    {application.schoolName ?? "—"}
                   </td>
                   <td className="px-5 py-4 sm:px-6">
                     {application.checkedIn ? (
@@ -102,7 +113,9 @@ function ApplicationsSection({
                             key={status}
                             type="button"
                             disabled={isUpdating || isCurrent}
-                            onClick={() => onStatusChange(application.id, status)}
+                            onClick={() =>
+                              onStatusChange(application.id, status)
+                            }
                             className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition disabled:cursor-default ${
                               isCurrent
                                 ? "border-gray-950 bg-gray-950 text-white shadow-sm"
@@ -166,7 +179,9 @@ export default function ApplicationsPage() {
         <div>
           <p className="admin-kicker">Participant management</p>
           <h1 className="admin-title">Applications</h1>
-          <p className="admin-subtitle">Review applicants, send decisions, and see who has arrived.</p>
+          <p className="admin-subtitle">
+            Review applicants, send decisions, and see who has arrived.
+          </p>
         </div>
         {statusMode.data?.mode === "test" && (
           <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-600/15">
@@ -178,13 +193,27 @@ export default function ApplicationsPage() {
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["Total", applications.data?.length ?? 0],
-          ["Pending", applications.data?.filter((app) => (app.publicStatus ?? "pending") === "pending").length ?? 0],
-          ["Approved", applications.data?.filter((app) => app.publicStatus === "accepted").length ?? 0],
-          ["Checked in", applications.data?.filter((app) => app.checkedIn).length ?? 0],
+          [
+            "Pending",
+            applications.data?.filter(
+              (app) => (app.publicStatus ?? "pending") === "pending",
+            ).length ?? 0,
+          ],
+          [
+            "Approved",
+            applications.data?.filter((app) => app.publicStatus === "accepted")
+              .length ?? 0,
+          ],
+          [
+            "Checked in",
+            applications.data?.filter((app) => app.checkedIn).length ?? 0,
+          ],
         ].map(([label, value]) => (
           <div key={label} className="admin-card px-5 py-4">
             <p className="text-xs font-medium text-gray-500">{label}</p>
-            <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-gray-950">{value}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-gray-950">
+              {value}
+            </p>
           </div>
         ))}
       </div>

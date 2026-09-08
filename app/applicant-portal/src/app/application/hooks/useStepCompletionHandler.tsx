@@ -37,6 +37,9 @@ export default function useStepCompletionHandler(
         if (field.hasOtherOption) {
           stepKeys.add(key + `_other`);
         }
+        if (field.type === 'school-combobox') {
+          stepKeys.add('schoolId');
+        }
       }
 
       if (field.type === 'checkbox-group') {

@@ -32,7 +32,7 @@ export function usePrepopulateSchoolFieldDropwdownSelection() {
 
   useEffect(() => {
     if (school) {
-      setSchoolSelection({ value: school.id, label: school.id });
+      setSchoolSelection({ value: school.id, label: school.name });
     }
 
     if (schoolError) {

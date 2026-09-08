@@ -264,8 +264,17 @@ export default function ApplyPage() {
                             {!step.schema.shape[key].isOptional() && <RequiredStar />}
                           </FieldLabel>
                           <SchoolCombobox
-                            defaultSelectedSchool={f.value}
-                            onValueChange={f.onChange}
+                            defaultSelectedSchool={form.watch('schoolId') || undefined}
+                            onValueChange={(value, selectedSchool) => {
+                              if (value === OTHER_OPTION) {
+                                f.onChange(OTHER_OPTION);
+                                form.setValue('schoolId', '', { shouldDirty: true });
+                                return;
+                              }
+
+                              f.onChange(selectedSchool.name);
+                              form.setValue('schoolId', selectedSchool.id, { shouldDirty: true });
+                            }}
                             placeholder={field.label}
                             isDefaultLoading={isLoadingSchool}
                           />

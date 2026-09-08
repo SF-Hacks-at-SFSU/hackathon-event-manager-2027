@@ -42,6 +42,8 @@ export function useMultiStepForm(
       }
     }
 
+    values.schoolId = '';
+
     return values;
   }, [steps]);
 
@@ -53,7 +55,11 @@ export function useMultiStepForm(
 
   useEffect(() => {
     if (schoolSelection) {
-      form.setValue('school', schoolSelection.value, {
+      form.setValue('school', schoolSelection.label, {
+        shouldValidate: false,
+        shouldDirty: true
+      });
+      form.setValue('schoolId', schoolSelection.value, {
         shouldValidate: false,
         shouldDirty: true
       });

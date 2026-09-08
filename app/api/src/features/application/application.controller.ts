@@ -5,6 +5,7 @@ import { sendNewApplicationNotification, sendTemplatedEmail } from '../../email/
 import { createCheckInToken } from '../checkIn/checkIn.token';
 import type { Context } from '../../core/context';
 import { isApplicationStatusTestMode, operationalMode } from '../../config/operationalMode';
+import { supabase } from '../../config/supabase';
 import type {
   ApplicationCreate as CreateApplicationInput,
   UpdateApplicationStatusInput
@@ -189,12 +190,60 @@ export async function updateApplicationStatus(
 }
 
 // organizer-only: the admin portal's application review queue
-export function listApplicationsForEvent(eventId: string) {
-  return prisma.application.findMany({
+export async function listApplicationsForEvent(eventId: string) {
+  const applications = await prisma.application.findMany({
     where: { eventId },
     include: { profile: true },
     orderBy: { createdAt: 'desc' }
   });
+
+  const schoolIds = [
+    ...new Set(
+      applications
+        .flatMap((application) => [application.schoolId, application.school])
+        .filter((value): value is string =>
+          Boolean(
+            value?.match(
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            )
+          )
+        )
+    )
+  ];
+  const schools = schoolIds.length
+    ? await prisma.school.findMany({
+        where: { id: { in: schoolIds } },
+        select: { id: true, name: true }
+      })
+    : [];
+  const schoolNames = new Map(schools.map((school) => [school.id, school.name]));
+
+  const uniqueUserIds = [...new Set(applications.map((application) => application.userId))];
+  const emailEntries = await Promise.all(
+    uniqueUserIds.map(async (userId) => {
+      try {
+        const { data, error } = await supabase.auth.admin.getUserById(userId);
+        if (error) {
+          console.warn(`Could not load email for applicant ${userId}:`, error.message);
+        }
+        return [userId, data.user?.email ?? null] as const;
+      } catch (error) {
+        console.warn(`Could not load email for applicant ${userId}:`, error);
+        return [userId, null] as const;
+      }
+    })
+  );
+  const emails = new Map(emailEntries);
+
+  return applications.map((application) => ({
+    ...application,
+    applicantEmail: emails.get(application.userId) ?? application.schoolEmail ?? null,
+    schoolName:
+      (application.schoolId ? schoolNames.get(application.schoolId) : undefined) ??
+      (application.school ? schoolNames.get(application.school) : undefined) ??
+      application.school ??
+      null
+  }));
 }
 
 export async function getMyApplication(ctx: Context) {
