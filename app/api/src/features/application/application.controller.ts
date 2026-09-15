@@ -246,6 +246,49 @@ export async function listApplicationsForEvent(eventId: string) {
   }));
 }
 
+// organizer-only: a single application, scoped to the organizer's active event
+export async function getApplicationForEvent(eventId: string, applicationId: string) {
+  const application = await prisma.application.findFirst({
+    where: { id: applicationId, eventId },
+    include: { profile: true }
+  });
+
+  if (!application) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Application not found' });
+  }
+
+  const schoolIdentifier = application.schoolId ?? application.school;
+  const isSchoolId = Boolean(
+    schoolIdentifier?.match(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    )
+  );
+  const school = schoolIdentifier
+    ? await prisma.school.findFirst({
+        where: isSchoolId ? { id: schoolIdentifier } : { name: schoolIdentifier },
+        select: { name: true }
+      })
+    : null;
+
+  let applicantEmail: string | null = application.schoolEmail ?? null;
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(application.userId);
+    if (error) {
+      console.warn(`Could not load email for applicant ${application.userId}:`, error.message);
+    } else {
+      applicantEmail = data.user?.email ?? applicantEmail;
+    }
+  } catch (error) {
+    console.warn(`Could not load email for applicant ${application.userId}:`, error);
+  }
+
+  return {
+    ...application,
+    applicantEmail,
+    schoolName: school?.name ?? application.school ?? null
+  };
+}
+
 export async function getMyApplication(ctx: Context) {
   const { user, event } = ctx;
   if (!user) {

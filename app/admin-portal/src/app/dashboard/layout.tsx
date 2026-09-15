@@ -18,9 +18,13 @@ function Navigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1 overflow-x-auto lg:flex-col" aria-label="Admin navigation">
+    <nav
+      className="flex gap-1 overflow-x-auto lg:flex-col"
+      aria-label="Admin navigation"
+    >
       {NAV.map((item) => {
-        const active = pathname === item.href;
+        const active =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
             key={item.href}
@@ -50,7 +54,11 @@ function Navigation() {
   );
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const signOut = useSignOut();
   const { user } = useUser();
   const event = useEventSelection();
@@ -66,7 +74,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 SF
               </div>
               <div>
-                <p className="text-sm font-semibold tracking-[-0.02em]">SF Hacks</p>
+                <p className="text-sm font-semibold tracking-[-0.02em]">
+                  SF Hacks
+                </p>
                 <p className="text-[11px] text-gray-500">Organizer console</p>
               </div>
             </div>
@@ -94,8 +104,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {initial}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium text-gray-900">Administrator</p>
-                <p className="truncate text-[11px] text-gray-500">{user?.email}</p>
+                <p className="truncate text-xs font-medium text-gray-900">
+                  Administrator
+                </p>
+                <p className="truncate text-[11px] text-gray-500">
+                  {user?.email}
+                </p>
               </div>
             </div>
             <button

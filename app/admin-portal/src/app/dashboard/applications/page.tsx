@@ -1,6 +1,7 @@
 "use client";
 
 import { RouterOutputs, trpc } from "@/utils/trpc";
+import Link from "next/link";
 import { useState } from "react";
 
 const STATUSES = ["pending", "accepted", "rejected", "waitlisted"] as const;
@@ -83,13 +84,31 @@ function ApplicationsSection({
                   className="border-b border-black/[0.055] transition last:border-b-0 hover:bg-black/[0.018]"
                 >
                   <td className="px-5 py-4 sm:px-6">
-                    <p className="font-medium text-gray-950">
-                      {application.profile.firstName}{" "}
-                      {application.profile.lastName}
-                    </p>
-                    <p className="mt-1 max-w-64 truncate text-xs font-normal text-gray-500">
-                      {application.applicantEmail ?? "Email unavailable"}
-                    </p>
+                    <Link
+                      href={`/dashboard/applications/${application.id}`}
+                      aria-label={`View profile for ${[application.profile.firstName, application.profile.lastName].filter(Boolean).join(" ") || "participant"}`}
+                      className="group -m-2 flex max-w-72 items-center justify-between gap-3 rounded-xl p-2 transition hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d41486]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-gray-950 group-hover:text-[#b20f70]">
+                          {[
+                            application.profile.firstName,
+                            application.profile.lastName,
+                          ]
+                            .filter(Boolean)
+                            .join(" ") || "Participant"}
+                        </span>
+                        <span className="mt-1 block truncate text-xs font-normal text-gray-500">
+                          {application.applicantEmail ?? "Email unavailable"}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="text-lg text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-[#d41486]"
+                      >
+                        ›
+                      </span>
+                    </Link>
                   </td>
                   <td className="max-w-xs truncate px-5 py-4 text-gray-500 sm:px-6">
                     {application.schoolName ?? "—"}

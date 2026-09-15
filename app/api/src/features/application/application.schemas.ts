@@ -25,6 +25,10 @@ export const applicationCreateSchema = ApplicationCreateInputObjectSchema.omit({
 
 export type ApplicationCreate = z.infer<typeof applicationCreateSchema>;
 
+export const applicationByIdSchema = z.object({
+  applicationId: z.uuid()
+});
+
 export const updateApplicationStatusSchema = z.object({
   applicationId: z.uuid(),
   publicStatus: ApplicationStatusEnum
