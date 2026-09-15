@@ -7,16 +7,11 @@ import {
 import { t } from '../../core/trpc';
 import {
   createOrUpdateApplication,
-  getApplicationForEvent,
   getMyApplication,
   listApplicationsForEvent,
   updateApplicationStatus
 } from './application.controller';
-import {
-  applicationByIdSchema,
-  applicationCreateSchema,
-  updateApplicationStatusSchema
-} from './application.schemas';
+import { applicationCreateSchema, updateApplicationStatusSchema } from './application.schemas';
 import { operationalMode } from '../../config/operationalMode';
 
 export const applicationRouter = t.router({
@@ -32,11 +27,6 @@ export const applicationRouter = t.router({
 
   // organizer-only review queue
   listByEvent: organizerProcedure.query(({ ctx }) => listApplicationsForEvent(ctx.event!.id)),
-
-  // organizer-only participant profile, scoped to the active event
-  byId: organizerProcedure
-    .input(applicationByIdSchema)
-    .query(({ ctx, input }) => getApplicationForEvent(ctx.event!.id, input.applicationId)),
 
   statusMode: organizerProcedure.query(() => ({
     mode: operationalMode.applicationStatus,

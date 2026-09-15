@@ -46,19 +46,20 @@ function yesNo(value: boolean | null | undefined) {
 
 export default function ParticipantProfilePage() {
   const params = useParams<{ applicationId: string }>();
-  const application = trpc.applications.byId.useQuery({
-    applicationId: params.applicationId,
-  });
+  const applications = trpc.applications.listByEvent.useQuery();
+  const participant = applications.data?.find(
+    (application) => application.id === params.applicationId,
+  );
 
-  if (application.isLoading) {
+  if (applications.isLoading) {
     return <div className="admin-card h-72 animate-pulse bg-white/50" />;
   }
 
-  if (application.isError || !application.data) {
+  if (applications.isError || !participant) {
     return (
       <div className="admin-card p-6">
         <p className="text-sm font-medium text-red-700">
-          {application.error?.message ?? "Participant profile is unavailable."}
+          {applications.error?.message ?? "Participant profile is unavailable."}
         </p>
         <Link
           href="/dashboard/applications"
@@ -70,7 +71,6 @@ export default function ParticipantProfilePage() {
     );
   }
 
-  const participant = application.data;
   const fullName =
     [participant.profile.firstName, participant.profile.lastName]
       .filter(Boolean)
