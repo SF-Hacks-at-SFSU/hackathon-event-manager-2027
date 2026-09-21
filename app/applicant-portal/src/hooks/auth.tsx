@@ -14,7 +14,6 @@ interface SignupData {
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
-  dob?: string;
 }
 
 export function useSignupData() {
@@ -24,7 +23,6 @@ export function useSignupData() {
   const saveSignupData = (data: {
     firstName?: string;
     lastName?: string;
-    dob?: string;
     phoneNumber?: string;
   }): void => {
     queryClient.setQueryData(['signupData'], data);

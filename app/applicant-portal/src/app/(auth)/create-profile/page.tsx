@@ -4,7 +4,6 @@ import { Alert, AlertTitle } from '@/components/shadcn/ui/alert';
 import { Button } from '@/components/shadcn/ui/button';
 import { Input } from '@/components/shadcn/ui/input';
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
-import { todayYMD } from '@/utils/ageChecker';
 
 import RequiredStar from '@/components/form/RequiredStar';
 import { PhoneInput } from '@/components/PhoneInput';
@@ -92,29 +91,6 @@ export default function CreateProfile() {
                   Verified through the email address you used to sign in.
                 </FieldDescription>
               </Field>
-              <Controller
-                name="dob"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>
-                      Date of Birth
-                      <RequiredStar />
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      type="date"
-                      max={todayYMD()}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <FieldDescription>
-                      Participants must be 18+ due to venue regulations.
-                    </FieldDescription>
-
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
               <div className="grid w-full gap-4 sm:grid-cols-2">
                 <Controller
                   name="firstName"
@@ -160,10 +136,7 @@ export default function CreateProfile() {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>
-                      Phone Number
-                      <RequiredStar />
-                    </FieldLabel>
+                    <FieldLabel>Phone Number</FieldLabel>
                     <PhoneInput
                       {...field}
                       type="tel"
@@ -172,7 +145,8 @@ export default function CreateProfile() {
                       aria-invalid={fieldState.invalid}
                     />
                     <FieldDescription>
-                      Used only for emergency notifications (e.g., weather).
+                      Optional — used only for social media tagging, recruiter connections, and
+                      future opportunities. Feel free to leave blank.
                     </FieldDescription>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>

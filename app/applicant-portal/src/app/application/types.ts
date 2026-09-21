@@ -1,7 +1,13 @@
 import { RouterInputs } from '@/utils/trpc';
 import z from 'zod';
 
-export type TextField = { type: 'text'; label: string; fillerText: string; helperText?: string };
+export type TextField = {
+  type: 'text';
+  label: string;
+  fillerText: string;
+  helperText?: string;
+  noticeBefore?: string;
+};
 
 export type OtherOptionField = { hasOtherOption?: boolean; otherLabel?: string };
 export type DropdownField = OtherOptionField & {

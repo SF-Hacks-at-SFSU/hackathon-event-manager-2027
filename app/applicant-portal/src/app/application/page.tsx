@@ -148,6 +148,11 @@ export default function ApplyPage() {
               if (field.type === 'text') {
                 return (
                   <FieldGroup key={key}>
+                    {field.noticeBefore && (
+                      <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                        {field.noticeBefore}
+                      </p>
+                    )}
                     <Controller
                       name={key}
                       control={form.control}

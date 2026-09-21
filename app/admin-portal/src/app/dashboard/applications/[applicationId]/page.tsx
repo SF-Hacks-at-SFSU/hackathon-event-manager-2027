@@ -175,9 +175,10 @@ export default function ParticipantProfilePage() {
         </Section>
 
         <Section title="Participant details">
+          <Detail label="Age group" value={participant.ageGroup} />
           <Detail
-            label="Date of birth"
-            value={participant.dob ?? participant.profile.dob}
+            label="How they heard about SF Hacks"
+            value={participant.referralSource}
           />
           <Detail
             label="Country of residence"

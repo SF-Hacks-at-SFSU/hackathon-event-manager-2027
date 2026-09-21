@@ -9,11 +9,13 @@ export const StepBasics = z
     linkedinUrl: z
       .string()
       .url('Please enter a valid LinkedIn URL (e.g., https://linkedin.com/in/yourprofile).')
-      .nonempty('Please provide your LinkedIn profile URL.'),
+      .optional()
+      .or(z.literal('')),
     githubUrl: z
       .string()
       .url('Please enter a valid GitHub URL (e.g., https://github.com/yourname).')
-      .nonempty('Please provide your GitHub profile URL.'),
+      .optional()
+      .or(z.literal('')),
     discordUsername: z.string().trim().min(2, 'Please provide your Discord username.')
   })
   .loose();
@@ -49,6 +51,20 @@ export const StepPreferences = z
 
 export const StepInsights = z
   .object({
+    ageGroup: z.enum(['Under 18', '18–22', '23–26', '27+']).optional().or(z.literal('')),
+    referralSource: z
+      .enum([
+        'Friend/classmate',
+        'Instagram',
+        'Discord',
+        'Professor/class announcement',
+        'MLH (Major League Hacking)',
+        'Flyer/poster on campus',
+        'Previous SF Hacks event',
+        OTHER_OPTION
+      ])
+      .optional()
+      .or(z.literal('')),
     majorFieldOfStudy: z.string().optional(),
     gender: z.string().optional(),
     pronouns: z.string().optional(),

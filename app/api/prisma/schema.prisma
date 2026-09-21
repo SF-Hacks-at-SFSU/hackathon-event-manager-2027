@@ -52,6 +52,8 @@ model Application {
   pronouns                  String?
   raceEthnicity             String?             @map("race_ethnicity")
   sexualOrientation         String?             @map("sexual_orientation")
+  ageGroup                  String?             @map("age_group")
+  referralSource            String?             @map("referral_source")
   educationLevel            String?             @map("education_level")
   tshirtSize                t_shirt_size?       @map("tshirt_size")
   majorFieldOfStudy         String?             @map("major_field_of_study")

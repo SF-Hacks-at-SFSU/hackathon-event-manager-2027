@@ -21,12 +21,9 @@ const profileCreationFormSchema = z
     phoneNumber: z
       .string()
       .min(10, 'Phone number must be at least 10 digits.')
-      .max(20, 'Phone number must be at most 20 digits.'),
-    dob: z.string().refine((val) => {
-      const date = new Date(val);
-      const now = new Date();
-      return !isNaN(date.getTime()) && date <= now;
-    }, 'Please enter a valid date of birth')
+      .max(20, 'Phone number must be at most 20 digits.')
+      .optional()
+      .or(z.literal(''))
   })
   .required();
 
@@ -42,8 +39,7 @@ export function useCreateProfile() {
     defaultValues: {
       firstName: '',
       lastName: '',
-      phoneNumber: '',
-      dob: ''
+      phoneNumber: ''
     }
   });
 
@@ -52,8 +48,7 @@ export function useCreateProfile() {
       await createProfile.mutateAsync({
         firstName: data.firstName,
         lastName: data.lastName,
-        phoneNumber: data.phoneNumber,
-        dob: data.dob
+        phoneNumber: data.phoneNumber || undefined
       });
       await refetchUserProfile();
       router.push('/my-dashboard');

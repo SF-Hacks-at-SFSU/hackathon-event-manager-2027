@@ -55,7 +55,9 @@ export const steps: StepConfig<any>[] = [
         type: 'text',
         label: 'LinkedIn URL',
         fillerText: 'https://linkedin.com/in/yourprofile',
-        helperText: 'Add the full URL to your LinkedIn profile.'
+        helperText: 'Add the full URL to your LinkedIn profile.',
+        noticeBefore:
+          'Optional — used only for social media tagging, recruiter connections, and future opportunities. Feel free to leave blank.'
       },
       githubUrl: {
         type: 'text',
@@ -110,9 +112,40 @@ export const steps: StepConfig<any>[] = [
   {
     key: 'insights',
     label: 'Community Insights',
-    description: 'This information helps us build a diverse and inclusive community.',
+    description:
+      'This information helps us build a diverse and inclusive community. Age group and referral source are optional and collected for demographic purposes.',
     schema: StepInsights,
     fields: {
+      ageGroup: {
+        type: 'dropdown',
+        label: 'What is your age group?',
+        fillerText: 'Select your age group',
+        options: [
+          { value: 'Under 18', label: 'Under 18' },
+          { value: '18–22', label: '18–22' },
+          { value: '23–26', label: '23–26' },
+          { value: '27+', label: '27+' }
+        ]
+      },
+      referralSource: {
+        type: 'dropdown',
+        label: 'How did you hear about SF Hacks?',
+        fillerText: 'Select an option',
+        options: [
+          { value: 'Friend/classmate', label: 'Friend/classmate' },
+          { value: 'Instagram', label: 'Instagram' },
+          { value: 'Discord', label: 'Discord' },
+          {
+            value: 'Professor/class announcement',
+            label: 'Professor/class announcement'
+          },
+          { value: 'MLH (Major League Hacking)', label: 'MLH (Major League Hacking)' },
+          { value: 'Flyer/poster on campus', label: 'Flyer/poster on campus' },
+          { value: 'Previous SF Hacks event', label: 'Previous SF Hacks event' }
+        ],
+        hasOtherOption: true,
+        otherLabel: 'Other (please specify)'
+      },
       experienceLevel: {
         type: 'dropdown',
         label: 'Experience Level',

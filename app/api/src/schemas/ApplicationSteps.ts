@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const Step1Schema = z.object({
-  dob: z.string().min(4),
-  phoneNumber: z.string().min(7),
+  ageGroup: z.enum(['Under 18', '18–22', '23–26', '27+']).optional().or(z.literal('')),
+  phoneNumber: z.string().min(7).optional().or(z.literal('')),
   countryOfResidence: z.string().min(2),
   levelOfStudy: z.string().min(2)
 });
@@ -16,6 +16,7 @@ export const Step2Schema = z.object({
 
 export const Step3Schema = z.object({
   linkedinUrl: z.string().url().optional().or(z.literal('')),
+  referralSource: z.string().optional(),
   experienceLevel: z.string().min(2),
   tshirtSize: z.enum([
     'US_XS',
