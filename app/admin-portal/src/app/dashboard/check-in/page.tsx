@@ -1,108 +1,36 @@
 "use client";
 
+import { useEventSelection } from "@/providers/EventSelectionProvider";
 import { trpc } from "@/utils/trpc";
-import QrScanner from "qr-scanner";
 import { QRCodeCanvas } from "qrcode.react";
-import { useCallback, useEffect, useRef, useState } from "react";
-
-type ScanResult = {
-  mode: "test" | "live";
-  recorded: boolean;
-  alreadyCheckedIn: boolean;
-  participant: {
-    applicationId: string;
-    name: string;
-    checkedIn: boolean;
-    checkedInAt: string | null;
-  };
-};
+import { useMemo, useState } from "react";
 
 export default function CheckInPage() {
-  const utils = trpc.useUtils();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const scannerRef = useRef<QrScanner | null>(null);
-  const scanLockedRef = useRef(false);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [manualToken, setManualToken] = useState("");
-  const [testApplicationId, setTestApplicationId] = useState("");
-  const [result, setResult] = useState<ScanResult | null>(null);
+  const event = useEventSelection();
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const mode = trpc.checkIn.mode.useQuery();
+  const eventPass = trpc.checkIn.eventPass.useQuery(undefined, {
+    staleTime: 23 * 60 * 60 * 1000,
+    refetchInterval: 23 * 60 * 60 * 1000,
+  });
   const applications = trpc.applications.listByEvent.useQuery(undefined, {
     refetchInterval: 15_000,
   });
-  const testPass = trpc.checkIn.testPass.useMutation({
-    onSuccess: (data) => {
-      setManualToken(data.token);
-      setCameraError(null);
-      setResult(null);
-    },
-    onError: (error) => setCameraError(error.message),
-  });
 
-  const scan = trpc.checkIn.scan.useMutation({
-    onSuccess: (data) => {
-      setResult(data as ScanResult);
-      setCameraActive(false);
-      void utils.applications.listByEvent.invalidate();
-    },
-    onError: (error) => {
-      setCameraError(error.message);
-      setCameraActive(false);
-    },
-    onSettled: () => {
-      scanLockedRef.current = false;
-    },
-  });
+  const participantPortalUrl = (
+    process.env.NEXT_PUBLIC_PARTICIPANT_PORTAL_URL ?? "https://app.sfhacks.io"
+  ).replace(/\/$/, "");
+  const checkInUrl = useMemo(() => {
+    if (!eventPass.data?.token) return null;
+    return `${participantPortalUrl}/events/${event.slug}/check-in?token=${encodeURIComponent(eventPass.data.token)}`;
+  }, [event.slug, eventPass.data?.token, participantPortalUrl]);
 
-  const submitToken = useCallback(
-    (token: string) => {
-      const normalized = token.trim();
-      if (!normalized || scanLockedRef.current) return;
-      scanLockedRef.current = true;
-      setCameraError(null);
-      setResult(null);
-      scan.mutate({ token: normalized });
-    },
-    [scan],
-  );
-
-  useEffect(() => {
-    if (!cameraActive || !videoRef.current) return;
-
-    const scanner = new QrScanner(
-      videoRef.current,
-      (scanResult) => submitToken(scanResult.data),
-      {
-        preferredCamera: "environment",
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
-        returnDetailedScanResult: true,
-      },
-    );
-    scannerRef.current = scanner;
-    void scanner.start().catch((error: unknown) => {
-      setCameraError(
-        error instanceof Error ? error.message : "Camera could not be started",
-      );
-      setCameraActive(false);
-    });
-
-    return () => {
-      scanner.stop();
-      scanner.destroy();
-      scannerRef.current = null;
-    };
-  }, [cameraActive, submitToken]);
-
-  const reset = () => {
-    setResult(null);
-    setCameraError(null);
-    setManualToken("");
-  };
-
+  const acceptedApplications =
+    applications.data?.filter(
+      (application) => application.publicStatus === "accepted",
+    ) ?? [];
   const checkedInApplications =
-    applications.data?.filter((application) => application.checkedIn) ?? [];
+    acceptedApplications.filter((application) => application.checkedIn) ?? [];
 
   const formatCheckInTime = (value: string | Date | null) => {
     if (!value) return "Time unavailable";
@@ -112,14 +40,25 @@ export default function CheckInPage() {
     }).format(new Date(value));
   };
 
+  const copyCheckInLink = async () => {
+    if (!checkInUrl) return;
+    try {
+      await navigator.clipboard.writeText(checkInUrl);
+      setCopyMessage("Check-in link copied.");
+    } catch {
+      setCopyMessage("Could not copy the link.");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="admin-kicker">Event day</p>
-          <h1 className="admin-title">Participant check-in</h1>
+          <h1 className="admin-title">Participant self check-in</h1>
           <p className="admin-subtitle">
-            Scan the secure QR shown in an accepted participant’s dashboard.
+            Display this QR at the entrance. Accepted participants scan it, sign
+            in, and check themselves in.
           </p>
         </div>
         <span
@@ -137,188 +76,104 @@ export default function CheckInPage() {
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
-          ["Approved", applications.data?.filter((app) => app.publicStatus === "accepted").length ?? 0],
+          ["Approved", acceptedApplications.length],
           ["Checked in", checkedInApplications.length],
-          ["Remaining", Math.max(0, (applications.data?.filter((app) => app.publicStatus === "accepted").length ?? 0) - checkedInApplications.length)],
+          [
+            "Remaining",
+            Math.max(
+              0,
+              acceptedApplications.length - checkedInApplications.length,
+            ),
+          ],
         ].map(([label, value]) => (
-          <div key={label} className="admin-card px-5 py-4 last:col-span-2 sm:last:col-span-1">
+          <div
+            key={label}
+            className="admin-card px-5 py-4 last:col-span-2 sm:last:col-span-1"
+          >
             <p className="text-xs font-medium text-gray-500">{label}</p>
-            <p className="mt-1 text-2xl font-semibold tracking-[-0.04em]">{value}</p>
+            <p className="mt-1 text-2xl font-semibold tracking-[-0.04em]">
+              {value}
+            </p>
           </div>
         ))}
       </div>
 
       {mode.data?.mode === "test" && (
-        <>
-          <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-            Scans are validated, but nobody will be marked as checked in.
-          </div>
-          <section className="admin-card mb-6 p-5 sm:p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
-              Safe test pass
-            </p>
-            <h2 className="mt-1 text-lg font-semibold">
-              Try an existing applicant
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              This creates a temporary signed pass without accepting or checking
-              in the applicant.
-            </p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <select
-                value={testApplicationId}
-                onChange={(event) => setTestApplicationId(event.target.value)}
-                className="admin-input min-w-0 flex-1 text-sm"
-              >
-                <option value="">Choose an applicant</option>
-                {applications.data?.map((application) => (
-                  <option key={application.id} value={application.id}>
-                    {[
-                      application.profile.firstName,
-                      application.profile.lastName,
-                    ]
-                      .filter(Boolean)
-                      .join(" ") || "Participant"}
-                    {" · "}
-                    {application.publicStatus ?? "pending"}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                disabled={!testApplicationId || testPass.isPending}
-                onClick={() =>
-                  testPass.mutate({ applicationId: testApplicationId })
-                }
-                className="admin-button"
-              >
-                Generate test pass
-              </button>
-            </div>
-            {testPass.data?.token && (
-              <div className="mt-5 flex flex-col items-center gap-3 rounded-2xl bg-gray-50 p-5 sm:flex-row sm:items-center">
-                <div className="rounded-xl bg-white p-2 shadow-sm">
-                  <QRCodeCanvas
-                    value={testPass.data.token}
-                    size={150}
-                    includeMargin
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold">
-                    {testPass.data.participantName}
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Pass generated. Scan this QR from another device, or use
-                    Validate below.
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
-        </>
+        <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          Participants can validate the flow, but nobody will be marked as
+          checked in until check-in mode is live.
+        </div>
       )}
 
-      <section className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#111113] shadow-[0_18px_50px_rgba(0,0,0,0.14)]">
-        <div className="relative flex min-h-80 items-center justify-center">
-          {cameraActive ? (
-            <video
-              ref={videoRef}
-              className="h-full min-h-80 w-full object-cover"
-              muted
-              playsInline
-            />
-          ) : (
-            <div className="p-10 text-center text-white">
-              <div className="mx-auto mb-5 grid size-20 place-items-center rounded-[1.4rem] border border-white/15 bg-white/[0.07] text-2xl shadow-inner">
-                <span className="grid size-9 place-items-center rounded-lg border border-white/50">⌁</span>
-              </div>
-              <p className="text-lg font-medium">Ready to scan</p>
-              <p className="mt-2 text-sm text-gray-400">
-                Camera access is used only while this scanner is open.
-              </p>
+      <section className="admin-card overflow-hidden">
+        <div className="border-b border-black/[0.06] px-5 py-5 text-center sm:px-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#b20f70]">
+            Scan to check in
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-gray-950">
+            {event.shortName}
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-gray-500">
+            Participants must sign in with the same email used for their
+            accepted application. The QR contains no participant information.
+          </p>
+        </div>
+
+        <div className="flex min-h-[460px] items-center justify-center bg-white p-6 sm:p-10">
+          {eventPass.isLoading && (
+            <p className="text-sm text-gray-500">Generating secure event QR…</p>
+          )}
+          {eventPass.isError && (
+            <div className="max-w-md rounded-2xl border border-red-200 bg-red-50 p-5 text-center text-sm text-red-800">
+              {eventPass.error.message}
+            </div>
+          )}
+          {checkInUrl && (
+            <div className="rounded-[2rem] border border-black/[0.08] bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.12)] sm:p-6">
+              <QRCodeCanvas
+                value={checkInUrl}
+                size={320}
+                includeMargin
+                level="M"
+              />
             </div>
           )}
         </div>
-        <div className="flex justify-center border-t border-white/10 p-4">
-          <button
-            type="button"
-            onClick={() => {
-              reset();
-              setCameraActive((active) => !active);
-            }}
-            disabled={scan.isPending}
-            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-gray-950 shadow-sm transition hover:-translate-y-0.5 disabled:opacity-50"
-          >
-            {cameraActive ? "Stop camera" : "Start camera"}
-          </button>
+
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-black/[0.06] bg-gray-50/70 px-5 py-4 sm:flex-row sm:px-6">
+          <p className="text-xs text-gray-500">
+            This signed QR expires after {eventPass.data?.expiresInHours ?? 24}
+            {" hours. "}
+            Refresh it before the next check-in session.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={copyCheckInLink}
+              disabled={!checkInUrl}
+              className="rounded-full border border-black/[0.1] bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 disabled:opacity-50"
+            >
+              Copy link
+            </button>
+            <button
+              type="button"
+              onClick={() => void eventPass.refetch()}
+              disabled={eventPass.isFetching}
+              className="admin-button"
+            >
+              {eventPass.isFetching ? "Refreshing…" : "Refresh QR"}
+            </button>
+          </div>
         </div>
+        {copyMessage && (
+          <p
+            className="px-6 pb-4 text-right text-xs text-gray-500"
+            role="status"
+          >
+            {copyMessage}
+          </p>
+        )}
       </section>
-
-      <div className="my-6 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">
-        <div className="h-px flex-1 bg-gray-200" />
-        Manual entry
-        <div className="h-px flex-1 bg-gray-200" />
-      </div>
-
-      <form
-        className="admin-card flex gap-2 p-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submitToken(manualToken);
-        }}
-      >
-        <input
-          value={manualToken}
-          onChange={(event) => setManualToken(event.target.value)}
-          placeholder="sfh1…"
-          className="min-w-0 flex-1 rounded-full border-0 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-gray-400"
-        />
-        <button
-          type="submit"
-          disabled={!manualToken.trim() || scan.isPending}
-          className="admin-button"
-        >
-          Validate
-        </button>
-      </form>
-
-      {cameraError && (
-        <div
-          className="mt-5 rounded-2xl border border-red-200/70 bg-red-50/90 p-4 text-sm text-red-800 shadow-sm"
-          role="alert"
-        >
-          {cameraError}
-        </div>
-      )}
-
-      {result && (
-        <div
-          className="mt-5 rounded-2xl border border-emerald-200/70 bg-emerald-50/90 p-5 text-emerald-950 shadow-sm"
-          role="status"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.16em]">
-            {result.mode === "test"
-              ? "Pass validated · no record changed"
-              : result.alreadyCheckedIn
-                ? "Already checked in"
-                : "Check-in complete"}
-          </p>
-          <p className="mt-2 text-2xl font-semibold">
-            {result.participant.name}
-          </p>
-          <p className="mt-1 text-sm opacity-70">
-            Application {result.participant.applicationId}
-          </p>
-          <button
-            type="button"
-            onClick={reset}
-            className="mt-4 text-sm font-semibold underline underline-offset-4"
-          >
-            Scan another participant
-          </button>
-        </div>
-      )}
 
       <section className="admin-card mt-8 overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/[0.06] px-5 py-5 sm:px-6">
@@ -348,9 +203,11 @@ export default function CheckInPage() {
           </p>
         ) : checkedInApplications.length === 0 ? (
           <div className="px-5 py-10 text-center">
-            <p className="font-medium text-gray-900">Nobody has checked in yet</p>
+            <p className="font-medium text-gray-900">
+              Nobody has checked in yet
+            </p>
             <p className="mt-1 text-sm text-gray-500">
-              Participants will appear here immediately after a successful scan.
+              Participants appear here after completing self check-in.
             </p>
           </div>
         ) : (

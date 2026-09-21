@@ -4,7 +4,6 @@ import { Button } from '@/components/shadcn/ui/button';
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
 import { trpc } from '@/utils/trpc';
 import { CheckCircle2, Copy, ExternalLink, QrCode, Share2 } from 'lucide-react';
-import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { useEventSelection } from '@/providers/EventSelectionProvider';
 
@@ -22,7 +21,8 @@ const statusCopy: Record<
   ACCEPTED: {
     eyebrow: 'Application approved',
     title: 'You’re in!',
-    description: 'Your spot is confirmed. Keep this check-in pass ready for event day.'
+    description:
+      'Your spot is confirmed. At the entrance, scan the event QR and sign in to check yourself in.'
   },
   WAITLISTED: {
     eyebrow: 'Application update',
@@ -59,10 +59,6 @@ export default function ParticipantPass() {
       ? status
       : 'PENDING';
   const isAccepted = safeStatus === 'ACCEPTED';
-  const checkInPass = trpc.checkIn.myPass.useQuery(undefined, {
-    enabled: isAccepted,
-    retry: false
-  });
   const eventWebsite = selectedEvent.website;
   const copy = statusCopy[safeStatus];
 
@@ -119,7 +115,7 @@ export default function ParticipantPass() {
   return (
     <div className="space-y-6">
       <section className="portal-surface overflow-hidden">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid">
           <div className="flex flex-col justify-center p-6 sm:p-9">
             <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/12 text-primary">
               {isAccepted ? <CheckCircle2 className="size-6" /> : <QrCode className="size-6" />}
@@ -139,27 +135,6 @@ export default function ParticipantPass() {
               </span>
             </div>
           </div>
-
-          {isAccepted && (
-            <div className="flex flex-col items-center justify-center border-t border-white/8 bg-white/[0.025] p-6 text-center sm:p-8 lg:border-l lg:border-t-0">
-              <p className="text-sm font-semibold">Your check-in QR</p>
-              <p className="mt-1 text-xs text-muted-foreground">Show this pass at the entrance.</p>
-              <div className="mt-5 flex min-h-60 min-w-60 items-center justify-center rounded-3xl bg-white p-3 shadow-2xl shadow-black/25">
-                {checkInPass.isLoading && <Spinner className="text-black" />}
-                {checkInPass.isError && (
-                  <p className="max-w-48 text-sm leading-5 text-red-600">
-                    {checkInPass.error.message}
-                  </p>
-                )}
-                {checkInPass.data?.token && (
-                  <QRCodeCanvas value={checkInPass.data.token} size={220} includeMargin />
-                )}
-              </div>
-              <p className="mt-4 text-xs text-muted-foreground">
-                This pass is unique to you. Don’t share it.
-              </p>
-            </div>
-          )}
         </div>
       </section>
 

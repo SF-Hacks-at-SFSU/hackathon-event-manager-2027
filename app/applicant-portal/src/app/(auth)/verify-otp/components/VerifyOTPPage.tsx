@@ -24,9 +24,10 @@ import { useOtpVerification } from '../hooks';
 
 type Props = {
   email: string;
+  returnTo: string;
 };
 
-export function VerifyOtpPage({ email }: Props) {
+export function VerifyOtpPage({ email, returnTo }: Props) {
   const {
     otp,
     setOtp,
@@ -38,7 +39,7 @@ export function VerifyOtpPage({ email }: Props) {
     isResending,
     messages,
     onRenavigate
-  } = useOtpVerification(email);
+  } = useOtpVerification(email, returnTo);
 
   const onResendClick = (e: React.FormEvent) => {
     try {

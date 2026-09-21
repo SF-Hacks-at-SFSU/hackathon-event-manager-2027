@@ -22,9 +22,14 @@ import {
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
 import { Controller } from 'react-hook-form';
 import { useSendOtp } from './hooks';
+import { useSearchParams } from 'next/navigation';
+import { safeReturnTo } from '@/utils/safeReturnTo';
+import { Suspense } from 'react';
 
-export default function SendOTPPage() {
-  const { form, onSubmit, isLoading } = useSendOtp();
+function SendOTPForm() {
+  const searchParams = useSearchParams();
+  const returnTo = safeReturnTo(searchParams.get('returnTo'));
+  const { form, onSubmit, isLoading } = useSendOtp('', returnTo);
 
   return (
     <main className="flex justify-center items-center">
@@ -88,5 +93,13 @@ export default function SendOTPPage() {
         </CardFooter>
       </Card>
     </main>
+  );
+}
+
+export default function SendOTPPage() {
+  return (
+    <Suspense fallback={<Spinner className="h-6 w-6 animate-spin" />}>
+      <SendOTPForm />
+    </Suspense>
   );
 }

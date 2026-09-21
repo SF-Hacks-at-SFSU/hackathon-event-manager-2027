@@ -5,12 +5,14 @@ import { VerifyOtpPage } from './components/VerifyOTPPage';
 type VerifyOtpPageProps = {
   searchParams: Promise<{
     email?: string;
+    returnTo?: string;
   }>;
 };
 
 export default async function VerifyOtp({ searchParams }: VerifyOtpPageProps) {
   const params = await searchParams;
   const email = params?.email ?? '';
+  const returnTo = params?.returnTo ?? '/my-dashboard';
 
   return (
     <Suspense
@@ -20,7 +22,7 @@ export default async function VerifyOtp({ searchParams }: VerifyOtpPageProps) {
         </div>
       }
     >
-      <VerifyOtpPage email={email} />
+      <VerifyOtpPage email={email} returnTo={returnTo} />
     </Suspense>
   );
 }

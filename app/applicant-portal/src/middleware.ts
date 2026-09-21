@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EVENT_COOKIE_NAME, EVENT_SELECTIONS, isEventSlug } from './lib/event-selection';
 
 export function middleware(request: NextRequest) {
-  const eventSlug = request.nextUrl.pathname.split('/')[2];
+  const pathSegments = request.nextUrl.pathname.split('/');
+  const eventSlug = pathSegments[2];
   const destination = request.nextUrl.clone();
-  destination.pathname = '/';
+  destination.pathname = pathSegments[3] === 'check-in' ? '/check-in' : '/';
 
   if (!isEventSlug(eventSlug)) {
     destination.searchParams.set('event-error', 'not-found');

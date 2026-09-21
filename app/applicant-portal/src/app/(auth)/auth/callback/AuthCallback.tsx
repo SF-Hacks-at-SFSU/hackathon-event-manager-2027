@@ -4,6 +4,7 @@ import { useSupabaseAuth } from '@/providers/SupabaseAuthProvider';
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { safeReturnTo } from '@/utils/safeReturnTo';
 
 export function AuthCallback() {
   const auth = useSupabaseAuth();
@@ -13,6 +14,7 @@ export function AuthCallback() {
 
   useEffect(() => {
     const code = searchParams.get('code');
+    const returnTo = safeReturnTo(searchParams.get('returnTo'));
     if (!code) {
       setError('This sign-in link is missing its code. Request a new one and try again.');
       return;
@@ -23,7 +25,7 @@ export function AuthCallback() {
         setError(error.message);
         return;
       }
-      router.replace('/my-dashboard');
+      router.replace(returnTo);
     });
   }, [auth, router, searchParams]);
 

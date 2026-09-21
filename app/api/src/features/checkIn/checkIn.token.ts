@@ -1,11 +1,13 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-interface CheckInPassPayload {
-  version: 1;
+interface EventCheckInPayload {
+  version: 2;
   eventId: string;
-  userId: string;
   issuedAt: number;
 }
+
+const EVENT_PASS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 function getSigningSecret() {
   const secret = process.env.CHECKIN_QR_SECRET;
@@ -19,44 +21,48 @@ function sign(encodedPayload: string) {
   return createHmac('sha256', getSigningSecret()).update(encodedPayload).digest('base64url');
 }
 
-export function createCheckInToken(eventId: string, userId: string) {
-  const payload: CheckInPassPayload = {
-    version: 1,
+export function createEventCheckInToken(eventId: string, issuedAt = Date.now()) {
+  const payload: EventCheckInPayload = {
+    version: 2,
     eventId,
-    userId,
-    issuedAt: Date.now()
+    issuedAt
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  return `sfh1.${encodedPayload}.${sign(encodedPayload)}`;
+  return `sfhe1.${encodedPayload}.${sign(encodedPayload)}`;
 }
 
-export function verifyCheckInToken(token: string): CheckInPassPayload {
+export function verifyEventCheckInToken(token: string, now = Date.now()): EventCheckInPayload {
   const [prefix, encodedPayload, providedSignature] = token.trim().split('.');
-  if (prefix !== 'sfh1' || !encodedPayload || !providedSignature) {
-    throw new Error('This is not a valid SF Hacks check-in pass');
+  if (prefix !== 'sfhe1' || !encodedPayload || !providedSignature) {
+    throw new Error('This is not a valid SF Hacks event check-in code');
   }
 
   const expectedSignature = sign(encodedPayload);
   const provided = Buffer.from(providedSignature);
   const expected = Buffer.from(expectedSignature);
   if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
-    throw new Error('This check-in pass could not be verified');
+    throw new Error('This event check-in code could not be verified');
   }
 
-  let payload: CheckInPassPayload;
+  let payload: EventCheckInPayload;
   try {
     payload = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'));
   } catch {
-    throw new Error('This check-in pass is malformed');
+    throw new Error('This event check-in code is malformed');
   }
 
   if (
-    payload.version !== 1 ||
+    payload.version !== 2 ||
     typeof payload.eventId !== 'string' ||
-    typeof payload.userId !== 'string' ||
     typeof payload.issuedAt !== 'number'
   ) {
-    throw new Error('This check-in pass is malformed');
+    throw new Error('This event check-in code is malformed');
+  }
+
+  if (payload.issuedAt > now + CLOCK_SKEW_MS || now - payload.issuedAt > EVENT_PASS_MAX_AGE_MS) {
+    throw new Error(
+      'This event check-in code has expired. Ask an organizer for the current QR code'
+    );
   }
 
   return payload;

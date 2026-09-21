@@ -2,7 +2,6 @@ import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import prisma from '../config/prismaClient';
 import { supabase } from '../config/supabase';
-import { buildCheckInEmailAssets } from './check-in-email';
 import { getDefaultStatusEmailTemplate } from './status-email.templates';
 
 dotenv.config();
@@ -25,7 +24,6 @@ interface TemplatedEmailOptions {
   toEmailOverride?: string | null;
   subjectPrefix?: string;
   dryRun?: boolean;
-  checkInToken?: string;
 }
 
 export interface TemplatedEmailResult {
@@ -185,17 +183,7 @@ export async function sendTemplatedEmail(
   const renderedSubject = renderTemplate(template.subject, variables)
     .replace(/[\r\n]+/g, ' ')
     .trim();
-  let renderedHtml = renderTemplate(template.bodyHtml, safeHtmlVariables);
-  let attachments: EmailAttachment[] | undefined;
-
-  if (options.checkInToken) {
-    const checkInAssets = await buildCheckInEmailAssets(
-      options.checkInToken,
-      process.env.PARTICIPANT_PORTAL_URL
-    );
-    attachments = checkInAssets.attachments;
-    renderedHtml += checkInAssets.html;
-  }
+  const renderedHtml = renderTemplate(template.bodyHtml, safeHtmlVariables);
 
   let toEmail = options.toEmailOverride ?? null;
   let authErrorMessage: string | null = null;
@@ -235,8 +223,7 @@ export async function sendTemplatedEmail(
     const result = await sendPersonalizedEmail({
       to: toEmail,
       subject: `${options.subjectPrefix ?? ''}${renderedSubject}`,
-      html: renderedHtml,
-      attachments
+      html: renderedHtml
     });
 
     await prisma.emailLog.create({

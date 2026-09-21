@@ -39,7 +39,7 @@ flowchart LR
 | Component        | Directory                      | Responsibility                                                                                |
 | ---------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
 | API              | `app/api`                      | Express, tRPC, Prisma, authorization, application decisions, email, QR check-in, judging      |
-| Applicant portal | `app/applicant-portal`         | Authentication, profile, application form, team management, application status, check-in pass |
+| Applicant portal | `app/applicant-portal`         | Authentication, profile, application form, team management, application status, self check-in |
 | Admin portal     | `app/admin-portal`             | Application review, decision emails, check-in, judging setup, announcements                   |
 | Judge portal     | `app/judge-portal`             | Assigned submissions and rubric scoring                                                       |
 | Database         | `app/api/prisma/schema.prisma` | The source of truth for the Postgres data model                                               |
@@ -59,18 +59,17 @@ The frontends call `/trpc`. In production, each Next.js app rewrites that path t
 
 Applications and related records are never selected globally. They are filtered by `event_id`, which prevents one event's applicants from appearing in another event's portal.
 
-## Acceptance emails and QR check-in
+## Acceptance emails and QR self check-in
 
 When an organizer accepts an applicant, the API:
 
-1. Creates an HMAC-signed check-in token containing the event ID and user ID.
-2. Renders that token as a PNG QR code.
-3. Sends the acceptance email through Resend with an inline QR and a downloadable `SF-Hacks-check-in-pass.png` attachment.
-4. Makes the same pass available in the participant dashboard.
+1. Updates the event-scoped application status.
+2. Sends an acceptance email explaining that the participant will scan the organizer's event QR at the venue.
+3. Records the delivery result in `email_logs`.
 
-At the venue, an organizer scans the QR in the admin portal. The API verifies its signature, confirms that it belongs to the active event, checks the applicant's acceptance status, and records `checked_in` and `checked_in_at`. Repeated scans report that the participant is already checked in instead of creating another record.
+At the venue, the organizer opens the admin check-in page and displays its shared event QR. A participant scans it, signs in with the same Supabase account used for their application, and confirms check-in. The API verifies the signed, event-bound QR; identifies the participant from their authenticated session rather than the QR; confirms that their application is accepted; and records `checked_in` and `checked_in_at`. Repeated submissions report that the participant is already checked in instead of creating another record.
 
-`CHECKIN_QR_SECRET` must be at least 32 characters and must stay unchanged for the event. Changing it invalidates QR passes created with the previous secret.
+The shared event QR contains no participant identity, expires after 24 hours, and refreshes automatically on the admin page after 23 hours. `CHECKIN_QR_SECRET` must be at least 32 characters. Changing it immediately invalidates any event QR generated with the previous secret.
 
 ## Multiple events in one database
 
@@ -94,7 +93,7 @@ Supabase Auth verifies the user. The API then reads `event_profiles` to authoriz
 
 | Role        | Access                                                                                  |
 | ----------- | --------------------------------------------------------------------------------------- |
-| `hacker`    | Own application, team, status, and accepted check-in pass                               |
+| `hacker`    | Own application, team, status, and authenticated self check-in                          |
 | `judge`     | Assigned projects and scoring                                                           |
 | `organizer` | Application decisions, check-in, judging administration, email tools, and announcements |
 
@@ -128,14 +127,15 @@ Pushing to `main` deploys services only when automatic deployments are enabled. 
 
 Configure these separately for each frontend project.
 
-| Variable                        | Used by                | Purpose                                                        |
-| ------------------------------- | ---------------------- | -------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | All portals            | Supabase project URL                                           |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | All portals            | Browser-safe Supabase anonymous key                            |
-| `NEXT_PUBLIC_EVENT_ID`          | All portals            | UUID of the event shown by that deployment                     |
-| `API_ORIGIN`                    | All portals            | Render API origin used by the server-side `/trpc` rewrite      |
-| `NEXT_PUBLIC_BASE_URL`          | Applicant portal       | Public applicant portal URL, normally `https://app.sfhacks.io` |
-| `BACKEND_PORT`                  | Local development only | Local API port, normally `4000`                                |
+| Variable                             | Used by                | Purpose                                                                         |
+| ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`           | All portals            | Supabase project URL                                                            |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`      | All portals            | Browser-safe Supabase anonymous key                                             |
+| `NEXT_PUBLIC_EVENT_ID`               | All portals            | UUID of the event shown by that deployment                                      |
+| `API_ORIGIN`                         | All portals            | Render API origin used by the server-side `/trpc` rewrite                       |
+| `NEXT_PUBLIC_BASE_URL`               | Applicant portal       | Public applicant portal URL, normally `https://app.sfhacks.io`                  |
+| `NEXT_PUBLIC_PARTICIPANT_PORTAL_URL` | Admin portal           | Base URL encoded into the event QR; defaults to the production applicant portal |
+| `BACKEND_PORT`                       | Local development only | Local API port, normally `4000`                                                 |
 
 Because the event ID is public routing configuration, it is safe to use the `NEXT_PUBLIC_` prefix. Never put the Supabase service-role key, database URL, Resend key, or QR secret in a `NEXT_PUBLIC_` variable.
 
@@ -236,10 +236,10 @@ npm run build --workspace=app/api
 - Verify `sfhacks.io` in Resend and use that domain in `RESEND_FROM_ADDRESS`.
 - Give each organizer an `organizer` event profile for the active event.
 - Test one application submission and confirm the organizer email arrives.
-- Test pending → accepted and confirm the applicant receives the QR attachment.
-- Verify the participant dashboard can reveal the same QR.
+- Test pending → accepted and confirm the applicant receives the self-check-in instructions.
+- Verify the admin check-in page displays the event QR and the participant dashboard no longer exposes a personal QR.
 - Keep decision and check-in modes in `test` until their real actions are intended.
-- On event day, set `CHECKIN_MODE=live`, redeploy the API, and test one scan.
+- On event day, set `CHECKIN_MODE=live`, redeploy the API, and test the event QR with an accepted test participant.
 
 ## Troubleshooting
 
@@ -259,20 +259,20 @@ Check `API_ORIGIN`, the Render service status, and `ADDITIONAL_CORS_ORIGINS`. Th
 
 Check the matching row in `email_logs`, then verify `RESEND_API_KEY`, `RESEND_FROM_ADDRESS`, and the Resend domain status. The sending domain must be verified; a Gmail address cannot be used as a custom Resend sending domain.
 
-### Acceptance email arrives without a QR
+### Acceptance email has outdated QR instructions
 
-Confirm that Render deployed a commit containing the QR email code, not only that Vercel deployed. Then send a new accepted decision and expand the newest message in Gmail. It should contain an inline QR and `SF-Hacks-check-in-pass.png`.
+Check whether the event has a saved `application_accepted` row in `email_templates`. Saved templates override the code default, so update or remove an outdated template before sending more decisions. The current default tells accepted participants to scan the event QR displayed by organizers.
 
-### QR modal says the secret is missing
+### The admin event QR cannot be generated
 
-Set `CHECKIN_QR_SECRET` on Render to a random value of at least 32 characters, rebuild the API, and generate a new pass. Preserve that value for the duration of the event.
+Set `CHECKIN_QR_SECRET` on Render to a random value of at least 32 characters, rebuild the API, and refresh the admin check-in page.
 
 ## Security notes
 
 - Browser applications receive only the Supabase anonymous key. The service-role key stays on the API server because it bypasses Row Level Security.
 - The API validates Supabase access tokens and performs event-role authorization before organizer and judge operations.
 - Event IDs scope data but are not secrets and are not a substitute for authorization.
-- QR payloads are signed and event-bound; the scanner never trusts an unsigned user or event ID.
+- QR payloads are signed, short-lived, event-bound, and contain no participant identity. The API takes the participant identity only from the verified Supabase session.
 - Keep Row Level Security enabled with ownership-based policies for tables exposed through the Supabase Data API.
 - Do not commit `.env`, `.env.local`, service keys, database passwords, or Resend credentials.
 

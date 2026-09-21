@@ -33,7 +33,6 @@ import { BadgeCheckIcon } from 'lucide-react';
 import { useState } from 'react';
 import StatusBadge from '../../../../../components/StatusBadge';
 import ErrorStateAlert from '../../components/ErrorStateAlert';
-import { QRCodeCanvas } from 'qrcode.react';
 
 interface TeamMember {
   teamId: string;
@@ -86,13 +85,6 @@ export default function TeamMemberCard({
   const userId = teamMemberInfo.userId;
 
   const [kickMutationSuccess, setKickMutationSuccess] = useState(true);
-  const [qrOpen, setQrOpen] = useState(false);
-  const isAccepted = applicationStatus === 'ACCEPTED';
-  const canShowQr = isMemberLoggedInUser && isAccepted;
-  const checkInPass = trpc.checkIn.myPass.useQuery(undefined, {
-    enabled: qrOpen && canShowQr,
-    retry: false
-  });
 
   const utils = trpc.useUtils();
   const kickFromTeamMutation = trpc.teams.kickTeamMemberById.useMutation({
@@ -212,51 +204,6 @@ export default function TeamMemberCard({
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction onClick={handleKickTeam}>Remove</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-
-                      {canShowQr && (
-                        <AlertDialog open={qrOpen} onOpenChange={setQrOpen}>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              Reveal QR Code
-                            </Button>
-                          </AlertDialogTrigger>
-
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Your Check-in QR</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Show this at check-in.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-
-                            <div className="flex min-h-64 items-center justify-center py-2">
-                              {checkInPass.isLoading && (
-                                <p className="text-sm text-muted-foreground">
-                                  Preparing secure pass…
-                                </p>
-                              )}
-                              {checkInPass.isError && (
-                                <p className="max-w-xs text-center text-sm text-destructive">
-                                  {checkInPass.error.message}
-                                </p>
-                              )}
-                              {checkInPass.data?.token && (
-                                <div className="rounded-md bg-white p-3">
-                                  <QRCodeCanvas
-                                    value={checkInPass.data.token}
-                                    size={220}
-                                    includeMargin
-                                  />
-                                </div>
-                              )}
-                            </div>
-
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Close</AlertDialogCancel>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>

@@ -5,11 +5,13 @@ import { OTP_LENGTH } from '@/lib/constants';
 import { getErrorMessage } from '@/utils/getErrorMessage';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { safeReturnTo } from '@/utils/safeReturnTo';
 
-export function useOtpVerification(email: string) {
+export function useOtpVerification(email: string, requestedReturnTo: string = '/my-dashboard') {
   const [otp, setOtp] = useState('');
   const [showResendAlert, setShowResendAlert] = useState(false);
   const router = useRouter();
+  const returnTo = safeReturnTo(requestedReturnTo);
 
   const messages = {
     title: 'Verify your email',
@@ -20,7 +22,7 @@ export function useOtpVerification(email: string) {
   };
 
   const onVerifySuccess = () => {
-    router.push('/my-dashboard');
+    router.push(returnTo);
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onVerifyError = (err: any) => {
@@ -64,7 +66,7 @@ export function useOtpVerification(email: string) {
     isPending: isResending,
     isError: isResendError,
     error: resendError
-  } = useSendOtpMutation(onResendSuccess, onResendError);
+  } = useSendOtpMutation(onResendSuccess, onResendError, returnTo);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();

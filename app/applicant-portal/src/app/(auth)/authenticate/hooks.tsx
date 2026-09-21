@@ -8,7 +8,7 @@ const OTPSendRequestFormSchema = z.object({
   email: z.email('Please enter a valid email address.')
 });
 
-export function useSendOtp(initialEmail: string = '') {
+export function useSendOtp(initialEmail: string = '', returnTo: string = '/my-dashboard') {
   const form = useForm<z.infer<typeof OTPSendRequestFormSchema>>({
     resolver: zodResolver(OTPSendRequestFormSchema),
     defaultValues: { email: initialEmail }
@@ -17,7 +17,9 @@ export function useSendOtp(initialEmail: string = '') {
   const router = useRouter();
   const sendOtpMutation = useSendOtpMutation(
     (_, email) => {
-      router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+      router.push(
+        `/verify-otp?email=${encodeURIComponent(email)}&returnTo=${encodeURIComponent(returnTo)}`
+      );
     },
     (err) => {
       console.error('Failed to send OTP:', err);
@@ -26,7 +28,8 @@ export function useSendOtp(initialEmail: string = '') {
       form.setError('email', {
         message: getErrorMessage(err, errorMessage)
       });
-    }
+    },
+    returnTo
   );
 
   const onSubmit = form.handleSubmit((values) => {

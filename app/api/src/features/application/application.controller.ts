@@ -2,7 +2,6 @@ import { Prisma, participation_level } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import prisma from '../../config/prismaClient';
 import { sendNewApplicationNotification, sendTemplatedEmail } from '../../email/email.service';
-import { createCheckInToken } from '../checkIn/checkIn.token';
 import type { Context } from '../../core/context';
 import { isApplicationStatusTestMode, operationalMode } from '../../config/operationalMode';
 import { supabase } from '../../config/supabase';
@@ -172,11 +171,7 @@ export async function updateApplicationStatus(
     {
       toEmailOverride: isApplicationStatusTestMode ? testRecipient : null,
       subjectPrefix: isApplicationStatusTestMode ? '[TEST] ' : '',
-      dryRun: isApplicationStatusTestMode && !testRecipient,
-      checkInToken:
-        input.publicStatus === 'accepted'
-          ? createCheckInToken(eventId, existingApplication.userId)
-          : undefined
+      dryRun: isApplicationStatusTestMode && !testRecipient
     }
   );
 
