@@ -4,7 +4,7 @@ import { isCheckInTestMode, operationalMode } from '../../config/operationalMode
 import { createEventCheckInToken, verifyEventCheckInToken } from './checkIn.token';
 
 export function getEventCheckInPass(eventId: string) {
-  return { token: createEventCheckInToken(eventId), expiresInHours: 24 };
+  return { token: createEventCheckInToken(eventId), persistent: true };
 }
 
 export async function selfCheckIn(eventId: string, userId: string, token: string) {

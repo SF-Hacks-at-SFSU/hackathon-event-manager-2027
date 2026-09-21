@@ -10,11 +10,15 @@ export default function CheckInPage() {
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const mode = trpc.checkIn.mode.useQuery();
   const eventPass = trpc.checkIn.eventPass.useQuery(undefined, {
-    staleTime: 23 * 60 * 60 * 1000,
-    refetchInterval: 23 * 60 * 60 * 1000,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const applications = trpc.applications.listByEvent.useQuery(undefined, {
-    refetchInterval: 15_000,
+    refetchInterval: 2_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
 
   const participantPortalUrl = (
@@ -142,28 +146,17 @@ export default function CheckInPage() {
 
         <div className="flex flex-col items-center justify-between gap-3 border-t border-black/[0.06] bg-gray-50/70 px-5 py-4 sm:flex-row sm:px-6">
           <p className="text-xs text-gray-500">
-            This signed QR expires after {eventPass.data?.expiresInHours ?? 24}
-            {" hours. "}
-            Refresh it before the next check-in session.
+            This is the permanent QR for this event. It remains the same after
+            refreshing or reopening this page.
           </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={copyCheckInLink}
-              disabled={!checkInUrl}
-              className="rounded-full border border-black/[0.1] bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 disabled:opacity-50"
-            >
-              Copy link
-            </button>
-            <button
-              type="button"
-              onClick={() => void eventPass.refetch()}
-              disabled={eventPass.isFetching}
-              className="admin-button"
-            >
-              {eventPass.isFetching ? "Refreshing…" : "Refresh QR"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={copyCheckInLink}
+            disabled={!checkInUrl}
+            className="rounded-full border border-black/[0.1] bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-100 disabled:opacity-50"
+          >
+            Copy link
+          </button>
         </div>
         {copyMessage && (
           <p
@@ -185,7 +178,7 @@ export default function CheckInPage() {
               Already checked in
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              This list refreshes automatically every 15 seconds.
+              Live attendance updates automatically every 2 seconds.
             </p>
           </div>
           <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/10">

@@ -69,7 +69,7 @@ When an organizer accepts an applicant, the API:
 
 At the venue, the organizer opens the admin check-in page and displays its shared event QR. A participant scans it, signs in with the same Supabase account used for their application, and confirms check-in. The API verifies the signed, event-bound QR; identifies the participant from their authenticated session rather than the QR; confirms that their application is accepted; and records `checked_in` and `checked_in_at`. Repeated submissions report that the participant is already checked in instead of creating another record.
 
-The shared event QR contains no participant identity, expires after 24 hours, and refreshes automatically on the admin page after 23 hours. `CHECKIN_QR_SECRET` must be at least 32 characters. Changing it immediately invalidates any event QR generated with the previous secret.
+The shared event QR contains no participant identity and is deterministic for the event, so it remains identical across page reloads and can be printed in advance. `CHECKIN_QR_SECRET` must be at least 32 characters and must remain stable. Changing it immediately invalidates the event QR and produces a different one.
 
 ## Multiple events in one database
 

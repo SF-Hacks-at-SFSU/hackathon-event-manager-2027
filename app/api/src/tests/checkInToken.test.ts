@@ -16,12 +16,18 @@ describe('check-in passes', () => {
   });
 
   it('round-trips a signed event identity without participant data', () => {
-    const token = createEventCheckInToken('event-1', 1_000);
-    const payload = verifyEventCheckInToken(token, 2_000);
+    const token = createEventCheckInToken('event-1');
+    const payload = verifyEventCheckInToken(token);
 
     expect(payload.eventId).toBe('event-1');
     expect(payload).not.toHaveProperty('userId');
-    expect(payload.version).toBe(2);
+    expect(payload).not.toHaveProperty('issuedAt');
+    expect(payload.version).toBe(3);
+  });
+
+  it('returns the same persistent pass for the same event', () => {
+    expect(createEventCheckInToken('event-1')).toBe(createEventCheckInToken('event-1'));
+    expect(createEventCheckInToken('event-1')).not.toBe(createEventCheckInToken('event-2'));
   });
 
   it('rejects a modified pass', () => {
@@ -31,12 +37,10 @@ describe('check-in passes', () => {
     expect(() => verifyEventCheckInToken(modified)).toThrow('could not be verified');
   });
 
-  it('rejects a pass older than 24 hours', () => {
-    const issuedAt = 1_000;
-    const token = createEventCheckInToken('event-1', issuedAt);
-
-    expect(() => verifyEventCheckInToken(token, issuedAt + 24 * 60 * 60 * 1_000 + 1)).toThrow(
-      'expired'
-    );
+  it('does not expire a persistent event pass', () => {
+    const token = createEventCheckInToken('event-1');
+    expect(
+      verifyEventCheckInToken(token, Date.now() + 10 * 365 * 24 * 60 * 60 * 1_000).eventId
+    ).toBe('event-1');
   });
 });
