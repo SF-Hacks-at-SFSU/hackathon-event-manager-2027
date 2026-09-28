@@ -9,6 +9,7 @@ import { useEventSelection } from "@/providers/EventSelectionProvider";
 
 const NAV = [
   { href: "/dashboard/applications", label: "Applications", marker: "A" },
+  { href: "/dashboard/stats", label: "Stats", marker: "S" },
   { href: "/dashboard/check-in", label: "Check-in", marker: "C" },
   { href: "/dashboard/judging", label: "Judging", marker: "J" },
   { href: "/dashboard/announcements", label: "Announcements", marker: "N" },
