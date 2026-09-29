@@ -115,7 +115,7 @@ export default function CheckInPage() {
             Scan to check in
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-gray-950">
-            {event.shortName}
+            {event.name}
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-gray-500">
             Participants must sign in with the same email used for their

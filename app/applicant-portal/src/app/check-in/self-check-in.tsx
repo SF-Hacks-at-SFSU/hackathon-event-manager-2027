@@ -5,8 +5,17 @@ import { Spinner } from '@/components/ui/shadcn-io/spinner';
 import { useUser } from '@/hooks/auth';
 import { useEventSelection } from '@/providers/EventSelectionProvider';
 import { trpc } from '@/utils/trpc';
-import { CheckCircle2, LogIn, QrCode, ShieldCheck } from 'lucide-react';
+import {
+  CheckCircle2,
+  ExternalLink,
+  LogIn,
+  MessageCircle,
+  QrCode,
+  ShieldCheck
+} from 'lucide-react';
 import Link from 'next/link';
+
+const DISCORD_INVITE_URL = 'https://discord.com/invite/2KwpfmGcU';
 
 export function SelfCheckIn({ token }: { token: string }) {
   const { user, isLoading: userLoading } = useUser();
@@ -34,6 +43,9 @@ export function SelfCheckIn({ token }: { token: string }) {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
             {checkIn.data ? 'You’re checked in!' : event.name}
           </h1>
+          {checkIn.data && (
+            <p className="mt-2 text-sm font-semibold text-foreground">{event.name}</p>
+          )}
           <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground">
             {checkIn.data
               ? checkIn.data.mode === 'test'
@@ -110,6 +122,22 @@ export function SelfCheckIn({ token }: { token: string }) {
               {checkIn.error.message}
             </div>
           )}
+
+          <div className="border-t border-white/8 pt-5">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <MessageCircle className="size-4 text-primary" />
+              <span>Meet teammates and get event updates.</span>
+            </div>
+            <a
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-5 text-sm font-semibold text-foreground transition hover:bg-white/[0.09]"
+            >
+              Join the GDG SFSU Discord
+              <ExternalLink className="size-4" />
+            </a>
+          </div>
         </div>
       </section>
     </main>
