@@ -70,7 +70,9 @@ function BarChart({
   const max = Math.max(...data.map((item) => item.value), 1);
 
   if (data.every((item) => item.value === 0)) {
-    return <p className="py-10 text-center text-sm text-gray-500">{emptyMessage}</p>;
+    return (
+      <p className="py-10 text-center text-sm text-gray-500">{emptyMessage}</p>
+    );
   }
 
   return (
@@ -78,9 +80,13 @@ function BarChart({
       {data.map((item) => (
         <div key={item.label}>
           <div className="mb-1.5 flex items-end justify-between gap-3 text-sm">
-            <span className="font-medium text-gray-700">{formatLabel(item.label)}</span>
+            <span className="font-medium text-gray-700">
+              {formatLabel(item.label)}
+            </span>
             <span className="shrink-0 text-xs tabular-nums text-gray-500">
-              <strong className="text-sm font-semibold text-gray-950">{item.value}</strong>
+              <strong className="text-sm font-semibold text-gray-950">
+                {item.value}
+              </strong>
               {total > 0 && ` · ${Math.round((item.value / total) * 100)}%`}
             </span>
           </div>
@@ -153,7 +159,9 @@ function ChartCard({
         <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-gray-950">
           {title}
         </h2>
-        <p className="mt-1 text-[13px] leading-5 text-gray-500">{description}</p>
+        <p className="mt-1 text-[13px] leading-5 text-gray-500">
+          {description}
+        </p>
       </div>
       {children}
     </section>
@@ -173,14 +181,18 @@ export default function StatsPage() {
     });
     const dietary = DIETARY_OPTIONS.map((option) => ({
       ...option,
-      value: scoped.filter((application) => application[option.key] === true).length,
+      value: scoped.filter((application) => application[option.key] === true)
+        .length,
     }));
     const accommodated = scoped.filter((application) =>
-      DIETARY_OPTIONS.slice(1).some((option) => application[option.key] === true),
+      DIETARY_OPTIONS.slice(1).some(
+        (option) => application[option.key] === true,
+      ),
     ).length;
     const missingDietary = scoped.filter((application) =>
       DIETARY_OPTIONS.every((option) => application[option.key] !== true),
     ).length;
+    const schools = countBy(scoped, (application) => application.schoolName);
 
     return {
       all,
@@ -189,18 +201,24 @@ export default function StatsPage() {
       accommodated,
       missingDietary,
       checkedIn: scoped.filter((application) => application.checkedIn).length,
+      schools,
+      schoolsRepresented: schools.filter(
+        (school) => school.label !== "Not provided",
+      ).length,
       shirtSizes: countBy(scoped, (application) => application.tshirtSize),
       studyLevels: countBy(
         scoped,
         (application) => application.levelOfStudy ?? application.educationLevel,
       ),
-      statuses: ["pending", "accepted", "waitlisted", "rejected"].map((status) => ({
-        label: status,
-        value: all.filter(
-          (application) => (application.publicStatus ?? "pending") === status,
-        ).length,
-        color: STATUS_COLORS[status],
-      })),
+      statuses: ["pending", "accepted", "waitlisted", "rejected"].map(
+        (status) => ({
+          label: status,
+          value: all.filter(
+            (application) => (application.publicStatus ?? "pending") === status,
+          ).length,
+          color: STATUS_COLORS[status],
+        }),
+      ),
     };
   }, [applications.data, scope]);
 
@@ -282,7 +300,9 @@ export default function StatsPage() {
           <BarChart data={stats.dietary} total={stats.scoped.length} />
           {stats.missingDietary > 0 && (
             <p className="mt-5 rounded-xl bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-900 ring-1 ring-inset ring-amber-600/10">
-              {stats.missingDietary} participant{stats.missingDietary === 1 ? " has" : "s have"} not provided a dietary response.
+              {stats.missingDietary} participant
+              {stats.missingDietary === 1 ? " has" : "s have"} not provided a
+              dietary response.
             </p>
           )}
         </ChartCard>
@@ -317,6 +337,16 @@ export default function StatsPage() {
           description={`Education mix across ${scopeLabel}.`}
         >
           <BarChart data={stats.studyLevels} total={stats.scoped.length} />
+        </ChartCard>
+
+        <ChartCard
+          title="Colleges & schools"
+          description={`${stats.schoolsRepresented} represented across ${scopeLabel}. Scroll to see the complete list.`}
+          className="xl:col-span-2"
+        >
+          <div className="max-h-[32rem] overflow-y-auto pr-2">
+            <BarChart data={stats.schools} total={stats.scoped.length} />
+          </div>
         </ChartCard>
       </div>
     </div>
