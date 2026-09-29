@@ -3,7 +3,15 @@
 import { Button } from '@/components/shadcn/ui/button';
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
 import { trpc } from '@/utils/trpc';
-import { BookOpen, CheckCircle2, Copy, ExternalLink, QrCode, Share2 } from 'lucide-react';
+import {
+  BookOpen,
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  MessageCircle,
+  QrCode,
+  Share2
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useEventSelection } from '@/providers/EventSelectionProvider';
 
@@ -11,6 +19,7 @@ type ApplicationStatus = 'PENDING' | 'REJECTED' | 'ACCEPTED' | 'WAITLISTED';
 
 const PARTICIPANT_HANDBOOK_URL =
   'https://docs.google.com/document/d/1dWe2Uxme1wfz-_EUHqF7p8AiOahpWhyvvz-1KBiuRa0/view';
+const DISCORD_INVITE_URL = 'https://discord.com/invite/2KwpfmGcU';
 
 const statusCopy: Record<
   ApplicationStatus,
@@ -142,32 +151,63 @@ export default function ParticipantPass() {
       </section>
 
       {isAccepted && (
-        <section className="portal-surface overflow-hidden">
-          <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                <BookOpen className="size-6" />
+        <div className="space-y-6">
+          <section className="portal-surface overflow-hidden">
+            <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                  <BookOpen className="size-6" />
+                </div>
+                <div>
+                  <p className="portal-eyebrow">Accepted participant resource</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Participant handbook
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                    Review the event schedule, venue details, tracks, submission requirements, and
+                    judging information before hackathon day.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="portal-eyebrow">Accepted participant resource</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">Participant handbook</h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                  Review the event schedule, venue details, tracks, submission requirements, and
-                  judging information before hackathon day.
-                </p>
-              </div>
+              <a
+                href={PARTICIPANT_HANDBOOK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+              >
+                Open handbook
+                <ExternalLink className="size-4" />
+              </a>
             </div>
-            <a
-              href={PARTICIPANT_HANDBOOK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            >
-              Open handbook
-              <ExternalLink className="size-4" />
-            </a>
-          </div>
-        </section>
+          </section>
+
+          <section className="portal-surface overflow-hidden">
+            <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#5865f2]/15 text-[#8b95ff]">
+                  <MessageCircle className="size-6" />
+                </div>
+                <div>
+                  <p className="portal-eyebrow">Participant community</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">GDG SFSU Discord</h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                    Meet teammates, ask questions, and receive event announcements from the
+                    organizers.
+                  </p>
+                </div>
+              </div>
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-[#5865f2] px-5 text-sm font-semibold text-white transition hover:bg-[#6773f3]"
+              >
+                Join Discord
+                <ExternalLink className="size-4" />
+              </a>
+            </div>
+          </section>
+        </div>
       )}
 
       <section className="portal-surface p-6 sm:p-8">
