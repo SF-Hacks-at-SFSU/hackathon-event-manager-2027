@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 export default function CheckInPage() {
   const event = useEventSelection();
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const mode = trpc.checkIn.mode.useQuery();
   const eventPass = trpc.checkIn.eventPass.useQuery(undefined, {
     staleTime: Infinity,
@@ -29,12 +30,37 @@ export default function CheckInPage() {
     return `${participantPortalUrl}/events/${event.slug}/check-in?token=${encodeURIComponent(eventPass.data.token)}`;
   }, [event.slug, eventPass.data?.token, participantPortalUrl]);
 
-  const acceptedApplications =
-    applications.data?.filter(
-      (application) => application.publicStatus === "accepted",
-    ) ?? [];
-  const checkedInApplications =
-    acceptedApplications.filter((application) => application.checkedIn) ?? [];
+  const acceptedApplications = useMemo(
+    () =>
+      applications.data?.filter(
+        (application) => application.publicStatus === "accepted",
+      ) ?? [],
+    [applications.data],
+  );
+  const checkedInApplications = useMemo(
+    () => acceptedApplications.filter((application) => application.checkedIn),
+    [acceptedApplications],
+  );
+  const filteredCheckedInApplications = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return checkedInApplications;
+
+    return checkedInApplications.filter((application) =>
+      [
+        application.profile.firstName,
+        application.profile.lastName,
+        `${application.profile.firstName ?? ""} ${application.profile.lastName ?? ""}`,
+        application.applicantEmail,
+        application.schoolEmail,
+        application.schoolName,
+        application.id,
+      ].some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
+      ),
+    );
+  }, [checkedInApplications, searchQuery]);
 
   const formatCheckInTime = (value: string | Date | null) => {
     if (!value) return "Time unavailable";
@@ -186,6 +212,40 @@ export default function CheckInPage() {
           </span>
         </div>
 
+        <div className="border-b border-black/[0.06] bg-gray-50/50 px-5 py-4 sm:px-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <label className="relative block w-full sm:max-w-md">
+              <span className="sr-only">Search checked-in participants</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+              >
+                <path
+                  d="m14.5 14.5 3 3m-1.75-8.25a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search by name, email, school, or application ID"
+                className="w-full rounded-xl border border-black/[0.1] bg-white py-2.5 pl-9 pr-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-[#d41486] focus:ring-2 focus:ring-[#d41486]/10"
+              />
+            </label>
+            {searchQuery.trim() && (
+              <p className="text-xs text-gray-500" role="status">
+                {filteredCheckedInApplications.length} of{" "}
+                {checkedInApplications.length} people
+              </p>
+            )}
+          </div>
+        </div>
+
         {applications.isLoading ? (
           <p className="px-5 py-8 text-center text-sm text-gray-500">
             Loading attendance…
@@ -203,9 +263,16 @@ export default function CheckInPage() {
               Participants appear here after completing self check-in.
             </p>
           </div>
+        ) : filteredCheckedInApplications.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="font-medium text-gray-900">No matching attendees</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Try a different name, email, school, or application ID.
+            </p>
+          </div>
         ) : (
           <div className="divide-y divide-black/[0.055]">
-            {checkedInApplications.map((application) => (
+            {filteredCheckedInApplications.map((application) => (
               <div
                 key={application.id}
                 className="flex flex-col gap-2 px-5 py-4 transition hover:bg-black/[0.018] sm:flex-row sm:items-center sm:justify-between sm:px-6"
@@ -220,6 +287,11 @@ export default function CheckInPage() {
                       .join(" ") || "Participant"}
                   </p>
                   <p className="mt-1 text-xs text-gray-500">
+                    {application.applicantEmail ??
+                      application.schoolEmail ??
+                      "Email unavailable"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-400">
                     Application {application.id}
                   </p>
                 </div>

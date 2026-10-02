@@ -3,7 +3,7 @@
 import { RouterOutputs, trpc } from "@/utils/trpc";
 import { useEventSelection } from "@/providers/EventSelectionProvider";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const STATUSES = ["pending", "accepted", "rejected", "waitlisted"] as const;
 type ApplicationStatus = (typeof STATUSES)[number];
@@ -199,12 +199,14 @@ function ApplicationsSection({
   title,
   description,
   applications,
+  isSearching,
   isUpdating,
   onStatusChange,
 }: {
   title: string;
   description: string;
   applications: Application[];
+  isSearching: boolean;
   isUpdating: boolean;
   onStatusChange: (applicationId: string, status: ApplicationStatus) => void;
 }) {
@@ -224,7 +226,9 @@ function ApplicationsSection({
 
       {applications.length === 0 ? (
         <p className="px-5 py-8 text-center text-sm text-gray-500">
-          No applications in this section.
+          {isSearching
+            ? "No applications in this section match your search."
+            : "No applications in this section."}
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -324,6 +328,7 @@ export default function ApplicationsPage() {
     kind: "success" | "error";
     text: string;
   } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const applications = trpc.applications.listByEvent.useQuery();
   const statusMode = trpc.applications.statusMode.useQuery();
   const updateStatus = trpc.applications.updateStatus.useMutation({
@@ -347,6 +352,27 @@ export default function ApplicationsPage() {
     onError: (error) =>
       setResultMessage({ kind: "error", text: error.message }),
   });
+  const filteredApplications = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return applications.data ?? [];
+
+    return (applications.data ?? []).filter((application) =>
+      [
+        application.profile.firstName,
+        application.profile.lastName,
+        `${application.profile.firstName ?? ""} ${application.profile.lastName ?? ""}`,
+        application.applicantEmail,
+        application.schoolEmail,
+        application.schoolName,
+        application.phoneNumber,
+        application.id,
+      ].some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
+      ),
+    );
+  }, [applications.data, searchQuery]);
 
   if (applications.isLoading)
     return <div className="admin-card h-52 animate-pulse bg-white/50" />;
@@ -430,18 +456,51 @@ export default function ApplicationsPage() {
           {resultMessage.text}
         </div>
       )}
+
+      <div className="admin-card mb-6 p-4 sm:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <label className="relative block w-full sm:max-w-xl">
+            <span className="sr-only">Search applications</span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            >
+              <path
+                d="m14.5 14.5 3 3m-1.75-8.25a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search by name, email, school, phone, or application ID"
+              className="w-full rounded-xl border border-black/[0.1] bg-white py-2.5 pl-9 pr-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-[#d41486] focus:ring-2 focus:ring-[#d41486]/10"
+            />
+          </label>
+          <p className="text-xs text-gray-500" role="status">
+            {searchQuery.trim()
+              ? `${filteredApplications.length} of ${applications.data?.length ?? 0} applications`
+              : `${applications.data?.length ?? 0} applications`}
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-6">
         {STATUS_SECTIONS.map((section) => (
           <ApplicationsSection
             key={section.status}
             title={section.title}
             description={section.description}
-            applications={
-              applications.data?.filter(
-                (application) =>
-                  (application.publicStatus ?? "pending") === section.status,
-              ) ?? []
-            }
+            applications={filteredApplications.filter(
+              (application) =>
+                (application.publicStatus ?? "pending") === section.status,
+            )}
+            isSearching={Boolean(searchQuery.trim())}
             isUpdating={updateStatus.isPending}
             onStatusChange={(applicationId, publicStatus) =>
               updateStatus.mutate({ applicationId, publicStatus })
