@@ -9,7 +9,7 @@ import {
   useQueryClient
 } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { safeReturnTo } from '@/utils/safeReturnTo';
+import { trpc } from '@/utils/trpc';
 
 interface SignupData {
   firstName?: string;
@@ -134,31 +134,16 @@ export function useSendOtpMutation(
         onMutateResult: unknown,
         context: MutationFunctionContext
       ) => Promise<unknown> | unknown)
-    | undefined,
-  returnTo: string = '/my-dashboard'
+    | undefined
 ) {
-  const auth = useSupabaseAuth();
-  const redirectPath = safeReturnTo(returnTo);
+  const sendOtp = trpc.auth.sendOtp.useMutation();
 
   return useMutation({
     mutationFn: async (email: string) => {
       const trimmedEmail = email.trim();
       if (!trimmedEmail) throw new Error('Enter your email');
 
-      const callbackUrl = new URL('/auth/callback', process.env.NEXT_PUBLIC_BASE_URL);
-      callbackUrl.searchParams.set('returnTo', redirectPath);
-
-      const { error } = await auth.signInWithOtp({
-        email: trimmedEmail,
-        options: {
-          // Supabase's default email templates only include a clickable link
-          // (customizing them to also show a typed code requires custom SMTP,
-          // which is a paid-tier-adjacent setup step). Route the click back
-          // here so `/auth/callback` can finish the sign-in.
-          emailRedirectTo: callbackUrl.toString()
-        }
-      });
-      if (error) throw new Error(error.message);
+      await sendOtp.mutateAsync({ email: trimmedEmail });
 
       return true;
     },

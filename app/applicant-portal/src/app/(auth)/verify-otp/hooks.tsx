@@ -66,7 +66,7 @@ export function useOtpVerification(email: string, requestedReturnTo: string = '/
     isPending: isResending,
     isError: isResendError,
     error: resendError
-  } = useSendOtpMutation(onResendSuccess, onResendError, returnTo);
+  } = useSendOtpMutation(onResendSuccess, onResendError);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();

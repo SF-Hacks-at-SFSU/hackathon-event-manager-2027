@@ -163,6 +163,12 @@ Use `APPLICATION_STATUS_MODE=live` when decisions should update applications and
 
 After changing Render variables, choose **Save, rebuild, and deploy**. Environment changes do not affect an already-running build until the service redeploys.
 
+Participant login codes are generated with Supabase Auth's server-side `generateLink` API and sent
+through Resend. This avoids the hosted Supabase sender's project-wide email quota while keeping OTP
+verification and session issuance in Supabase. `RESEND_API_KEY`, `RESEND_FROM_ADDRESS`,
+`SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` must therefore be configured on the API service for
+participant sign-in.
+
 ## Local development
 
 Requirements: Node.js 20 or newer, npm, and access to the development Supabase project.

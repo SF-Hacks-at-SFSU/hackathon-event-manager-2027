@@ -28,8 +28,7 @@ export function useSendOtp(initialEmail: string = '', returnTo: string = '/my-da
       form.setError('email', {
         message: getErrorMessage(err, errorMessage)
       });
-    },
-    returnTo
+    }
   );
 
   const onSubmit = form.handleSubmit((values) => {

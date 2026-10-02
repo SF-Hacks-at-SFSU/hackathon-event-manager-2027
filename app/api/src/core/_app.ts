@@ -8,6 +8,7 @@ import { judgingRouter } from '../features/judging/judging.routes';
 import { announcementsRouter } from '../features/announcements/announcements.routes';
 import { emailTemplatesRouter } from '../email/email.templates.routes';
 import { checkInRouter } from '../features/checkIn/checkIn.routes';
+import { authRouter } from '../features/auth/auth.routes';
 import { t } from './trpc';
 
 export const trpcRouter = t.router({
@@ -21,7 +22,8 @@ export const trpcRouter = t.router({
   judging: judgingRouter,
   announcements: announcementsRouter,
   emailTemplates: emailTemplatesRouter,
-  checkIn: checkInRouter
+  checkIn: checkInRouter,
+  auth: authRouter
 });
 
 export type AppRouter = typeof trpcRouter;
