@@ -1,6 +1,7 @@
 "use client";
 
 import { useEventSelection } from "@/providers/EventSelectionProvider";
+import { downloadApplicationsCsv } from "@/utils/applicationCsv";
 import { trpc } from "@/utils/trpc";
 import { QRCodeCanvas } from "qrcode.react";
 import { useMemo, useState } from "react";
@@ -207,9 +208,25 @@ export default function CheckInPage() {
               Live attendance updates automatically every 2 seconds.
             </p>
           </div>
-          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/10">
-            {checkedInApplications.length} checked in
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/10">
+              {checkedInApplications.length} checked in
+            </span>
+            <button
+              type="button"
+              disabled={checkedInApplications.length === 0}
+              onClick={() =>
+                downloadApplicationsCsv(
+                  checkedInApplications,
+                  event.name,
+                  "checked-in",
+                )
+              }
+              className="admin-button-secondary disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Export checked-in CSV
+            </button>
+          </div>
         </div>
 
         <div className="border-b border-black/[0.06] bg-gray-50/50 px-5 py-4 sm:px-6">
